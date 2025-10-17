@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="email_input_placeholder">Email</string>
+    <string name="password_input_placeholder">Password</string>
+    <string name="confirm_password_input_placeholder">Confirm password</string>
+    <string name="username_input_placeholder">Username</string>
+    <string-array name="avatars">
+        <item>Avatar A</item>
+        <item>Avatar B</item>
+        <item>Avatar C</item>
+        <item>Avatar D</item>
+        <item>Avatar E</item>
+    </string-array>
+    <string name="register_button">Register</string>
+</resources>
