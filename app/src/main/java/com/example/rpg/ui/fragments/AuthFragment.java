@@ -13,9 +13,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentAuthBinding;
+import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.dtos.LoginCredentialsDto;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -43,7 +43,7 @@ public class AuthFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentAuthBinding.inflate(inflater, container, false);
         return binding.getRoot();
@@ -94,6 +94,8 @@ public class AuthFragment extends Fragment {
 
                     return;
                 }
+
+                AuthPrefs.setUser(requireContext(), user.username);
 
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(
