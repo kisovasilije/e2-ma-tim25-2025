@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.rpg.R;
 import com.example.rpg.databinding.ActivityMainBinding;
+import com.example.rpg.ui.fragments.AuthFragment;
 import com.example.rpg.ui.fragments.RegistrationFragment;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.nav_signup) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new RegistrationFragment())
+                    .commit();
+        }
+
+        if (id == R.id.nav_login) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new AuthFragment())
                     .commit();
         }
 
