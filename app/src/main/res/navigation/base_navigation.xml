@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/base_navigation"
+    app:startDestination="@id/nav_signup">
+
+    <fragment
+        android:id="@+id/nav_signup"
+        android:name="com.example.rpg.ui.fragments.RegistrationFragment"
+        android:label="Sign up" />
+
+    <fragment
+        android:id="@+id/nav_login"
+        android:name="com.example.rpg.ui.fragments.AuthFragment"
+        android:label="Log in" />
+
+</navigation>
