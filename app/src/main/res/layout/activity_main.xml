@@ -5,11 +5,11 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ui.activities.MainActivity">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/registrationFragment"
-        android:name="com.example.rpg.fragments.RegistrationFragment"
+        android:name="com.example.rpg.ui.fragments.RegistrationFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

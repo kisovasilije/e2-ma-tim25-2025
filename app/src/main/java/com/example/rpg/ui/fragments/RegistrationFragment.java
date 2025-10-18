@@ -1,4 +1,4 @@
-package com.example.rpg.fragments;
+package com.example.rpg.ui.fragments;
 
 import android.os.Bundle;
 
