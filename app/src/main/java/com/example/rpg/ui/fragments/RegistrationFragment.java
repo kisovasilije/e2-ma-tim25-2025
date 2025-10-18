@@ -1,5 +1,6 @@
 package com.example.rpg.ui.fragments;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -30,8 +31,17 @@ import java.util.concurrent.Executors;
 public class RegistrationFragment extends Fragment {
     private FragmentRegistrationBinding binding;
 
+    private AppDatabase db;
+
     public RegistrationFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+
+        db = AppDatabase.get(context.getApplicationContext());
     }
 
     @Override
@@ -78,12 +88,6 @@ public class RegistrationFragment extends Fragment {
         binding.registerButton.setOnClickListener(v -> {
             var user = cvtBindingToUser(v);
             if (user == null) return;
-
-            AppDatabase db = Room.databaseBuilder(
-                    requireContext().getApplicationContext(),
-                    AppDatabase.class,
-                    AppDatabase.databaseName
-            ).build();
 
             new Thread(() -> {
                 var userId = db.userDao().insert(user);
