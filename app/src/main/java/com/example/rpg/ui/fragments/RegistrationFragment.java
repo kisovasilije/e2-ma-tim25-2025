@@ -100,8 +100,28 @@ public class RegistrationFragment extends Fragment {
     }
 
     private User cvtBindingToUser(View v) {
+        var email = binding.emailInput.getText().toString();
+        var username = binding.usernameInput.getText().toString();
         var password = binding.passwordInput.getText().toString();
-        if (!password.equals(binding.confirmPasswordInput.getText().toString())) {
+        var confirmPassword = binding.confirmPasswordInput.getText().toString();
+        var avatar = binding.avatarInput.getSelectedItem().toString();
+
+        var areRequiredFieldsEmpty = email.isEmpty()
+                || username.isEmpty()
+                || password.isEmpty()
+                || confirmPassword.isEmpty()
+                || avatar.isEmpty();
+
+        if (areRequiredFieldsEmpty) {
+            Snackbar
+                    .make(v, "Must fill required fields.", Snackbar.LENGTH_SHORT)
+                    .setBackgroundTint(Color.RED)
+                    .show();
+
+            return null;
+        }
+
+        if (!password.equals(confirmPassword)) {
             Snackbar
                     .make(v, "Password mismatch.", Snackbar.LENGTH_SHORT)
                     .setBackgroundTint(Color.RED)
@@ -111,8 +131,7 @@ public class RegistrationFragment extends Fragment {
         }
 
         Avatar a;
-        var in = binding.avatarInput.getSelectedItem().toString();
-        var parsedAvatar = in.replace(" ", "").toUpperCase();
+        var parsedAvatar = avatar.replace(" ", "").toUpperCase();
 
         try {
             a = Avatar.valueOf(parsedAvatar);
@@ -126,11 +145,6 @@ public class RegistrationFragment extends Fragment {
             return null;
         }
 
-        return new User(
-                binding.emailInput.getText().toString(),
-                binding.usernameInput.getText().toString(),
-                password,
-                a
-        );
+        return new User(email, username, password, a);
     }
 }
