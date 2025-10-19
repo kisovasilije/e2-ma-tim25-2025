@@ -1,13 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/nav_signup"
-        android:title="Sign up"
+    <item
+        android:id="@+id/nav_signup"
+        android:title="Sign Up"
+        android:icon="@android:drawable/ic_menu_edit"
         app:showAsAction="ifRoom" />
 
-    <item android:id="@+id/nav_login"
-        android:title="Log in"
-        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/nav_category"
+        android:title="Categories"
+        android:icon="@android:drawable/ic_menu_manage"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/nav_tasks"
+        android:title="Tasks"
+        android:icon="@android:drawable/ic_menu_agenda"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/nav_battle"
+        android:title="Battle"
+        android:icon="@android:drawable/ic_menu_compass"
+        app:showAsAction="ifRoom" />
 
 </menu>
