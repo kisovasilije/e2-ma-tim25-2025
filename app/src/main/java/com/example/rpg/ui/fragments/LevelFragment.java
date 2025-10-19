@@ -1,5 +1,6 @@
 package com.example.rpg.ui.fragments;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -21,6 +22,7 @@ import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.databinding.FragmentLevelBinding;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
 import com.example.rpg.ui.adapters.TaskAdapter;
@@ -39,6 +41,8 @@ public class LevelFragment extends Fragment {
     private TaskAdapter adapter;
 
     private User user;
+
+    private UserProgress progress;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -72,9 +76,11 @@ public class LevelFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
+            progress = db.userProgressDao().getById(user.id);
 
             requireActivity().runOnUiThread(() -> {
                 if (user != null) {
+                    setStats();
                     setTasks();
                     return;
                 }
@@ -95,6 +101,24 @@ public class LevelFragment extends Fragment {
         }).start();
     }
 
+    @SuppressLint("DefaultLocale")
+    private void setStats() {
+        binding.titleText.setText(progress.title);
+        binding.ppText.setText(String.format("%d", progress.pp));
+        binding.xpText.setText(String.format("%d", progress.xp));
+        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
+        binding.levelText.setText(String.format("%d", progress.level));
+    }
+
+    @SuppressLint("DefaultLocale")
+    private void setStats(UserProgress progress) {
+        binding.titleText.setText(progress.title);
+        binding.ppText.setText(String.format("%d", progress.pp));
+        binding.xpText.setText(String.format("%d", progress.xp));
+        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
+        binding.levelText.setText(String.format("%d", progress.level));
+    }
+
     private void setTasks() {
         new Thread(() -> {
             List<Task> tasks = db.taskDao().getByUserId(user.id);
@@ -113,7 +137,15 @@ public class LevelFragment extends Fragment {
             t.isPassed = true;
             requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
             int rowsAffected = db.taskDao().passTask(t.id);
-            Log.i("ROWS AFFECTED", rowsAffected == 1 ? "1" : "Error passing task.");
+            Log.i("RA UPDATE TASK", rowsAffected == 1 ? "1" : "Error passing task.");
+
+            var progress = db.userProgressDao().getById(user.id);
+            progress.update(t);
+            rowsAffected = db.userProgressDao().update(progress);
+            Log.i("RA UPDATE PROGRESS", rowsAffected == 1 ? "1" : "Error updating progress.");
+            if (rowsAffected > 0) {
+                requireActivity().runOnUiThread(() -> this.setStats(progress));
+            }
         }).start();
     }
 }

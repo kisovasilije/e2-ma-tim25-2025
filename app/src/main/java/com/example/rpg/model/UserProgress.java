@@ -1,5 +1,7 @@
 package com.example.rpg.model;
 
+import android.annotation.SuppressLint;
+
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -12,34 +14,48 @@ public class UserProgress {
 
     public int level;
 
-    /**
-     * Previous level xp cap
-     */
-    public int plXpCap;
+    public int xpCap;
 
     /**
      * Power points
      */
     public int pp;
 
-    /**
-     * Previous level power points cap
-     */
-    public int plPpCap;
+    public int ppCap;
 
     public String title;
 
-    public UserProgress(long id, int xp, int level, int plXpCap, int pp, int plPpCap, String title) {
+    public UserProgress(long id, int xp, int level, int xpCap, int pp, int ppCap, String title) {
         this.id = id;
         this.xp = xp;
         this.level = level;
-        this.plXpCap = plXpCap;
+        this.xpCap = xpCap;
         this.pp = pp;
-        this.plPpCap = plPpCap;
+        this.ppCap = ppCap;
         this.title = title;
     }
 
     public static UserProgress getDefault(long id) {
-        return new UserProgress(id, 0, 1, 0, 0, 0, "Title1");
+        return new UserProgress(id, 0, 1, 200, 0, 40, "Title1");
+    }
+
+    @SuppressLint("DefaultLocale")
+    public void update(Task task) {
+        xp += task.xp;
+        pp += 20;
+
+        if (xp < xpCap && pp < ppCap) {
+            return;
+        }
+
+        if (xp >= xpCap) {
+            xpCap = ((int) Math.ceil((double) (xpCap * 5) / 2 / 100.0)) * 100;
+            level++;
+            title = String.format("Title%d", level);
+        }
+
+        if (pp >= ppCap) {
+            ppCap = ((int) Math.ceil((double) (ppCap * 7) / 4 / 10.0)) * 10;
+        }
     }
 }

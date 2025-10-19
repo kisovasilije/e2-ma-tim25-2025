@@ -19,7 +19,7 @@ import com.example.rpg.model.UserProgress;
                 Task.class,
                 UserProgress.class
         },
-        version = 3
+        version = 4
 )
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
