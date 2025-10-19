@@ -2,7 +2,12 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/base_navigation"
-    app:startDestination="@id/nav_signup">
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.example.rpg.ui.fragments.HomeFragment"
+        android:label="Home" />
 
     <fragment
         android:id="@+id/nav_signup"
