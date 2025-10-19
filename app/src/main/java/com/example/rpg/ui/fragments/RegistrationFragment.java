@@ -22,6 +22,7 @@ import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentRegistrationBinding;
 import com.example.rpg.model.Avatar;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserProgress;
 import com.example.rpg.ui.activities.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -94,6 +95,8 @@ public class RegistrationFragment extends Fragment {
 
             new Thread(() -> {
                 var userId = db.userDao().insert(user);
+                var progress = UserProgress.getDefault(userId);
+                db.userProgressDao().insert(progress);
 
                 var nav = NavHostFragment.findNavController(this);
                 var opts = new NavOptions.Builder()
