@@ -2,6 +2,7 @@ package com.example.rpg.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "users")
@@ -19,6 +20,16 @@ public class User {
 
     public Avatar avatar;
 
+
+    public User(long id, String email, String username, String password, Avatar avatar) {
+        this.id = id;
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.avatar = avatar;
+    }
+
+    @Ignore
     public User(String email, String username, String password, Avatar avatar) {
         this.email = email;
         this.username = username;

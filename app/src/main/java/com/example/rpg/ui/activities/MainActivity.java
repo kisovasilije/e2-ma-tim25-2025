@@ -1,6 +1,7 @@
 package com.example.rpg.ui.activities;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.ActionBar;
