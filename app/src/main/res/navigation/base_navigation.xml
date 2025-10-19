@@ -24,4 +24,9 @@
         android:name="com.example.rpg.ui.fragments.ProfileFragment"
         android:label="Profile" />
 
+    <fragment
+        android:id="@+id/nav_level"
+        android:name="com.example.rpg.ui.fragments.LevelFragment"
+        android:label="Levels" />
+
 </navigation>
