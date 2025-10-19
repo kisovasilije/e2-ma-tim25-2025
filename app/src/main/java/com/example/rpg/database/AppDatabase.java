@@ -8,17 +8,29 @@ import androidx.room.RoomDatabase;
 
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.daos.UserDao;
+import com.example.rpg.database.daos.UserProgressDao;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserProgress;
 
-@Database(entities = {User.class, Task.class}, version = 2)
+@Database(
+        entities = {
+                User.class,
+                Task.class,
+                UserProgress.class
+        },
+        version = 3
+)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
     private static final String databaseName = "rpg";
 
     public abstract UserDao userDao();
+
     public abstract TaskDao taskDao();
+
+    public abstract UserProgressDao userProgressDao();
 
     public static AppDatabase get(Context ctx) {
         if (INSTANCE == null) {
