@@ -26,7 +26,7 @@ public final class AuthPrefs {
     }
 
     @Nullable
-    public static String isAuthenticated(Context ctx) {
+    public static String getIsAuthenticated(Context ctx) {
         return ctx.getSharedPreferences(pref, Context.MODE_PRIVATE)
                 .getString(usernameKey, null);
     }

@@ -7,15 +7,19 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentAuthBinding;
 import com.example.rpg.prefs.AuthPrefs;
+import com.example.rpg.ui.activities.MainActivity;
 import com.example.rpg.ui.dtos.LoginCredentialsDto;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -98,6 +102,19 @@ public class AuthFragment extends Fragment {
                 AuthPrefs.setUser(requireContext(), user.username);
 
                 requireActivity().runOnUiThread(() -> {
+                    if(getContext() == null) return;
+
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).setAuth(true);
+                    }
+
+                    var nav = NavHostFragment.findNavController(this);
+                    var opts = new NavOptions.Builder()
+                            .setPopUpTo(R.id.base_navigation, true)
+                            .build();
+
+                    nav.navigate(R.id.nav_home, null, opts);
+
                     Toast.makeText(
                             requireContext(),
                             String.format(Locale.US, "User %s successfully authenticated.", user.username),

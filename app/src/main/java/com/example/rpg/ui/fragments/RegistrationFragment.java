@@ -7,6 +7,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.room.Room;
 
 import android.view.LayoutInflater;
@@ -20,6 +22,7 @@ import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentRegistrationBinding;
 import com.example.rpg.model.Avatar;
 import com.example.rpg.model.User;
+import com.example.rpg.ui.activities.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Locale;
@@ -92,7 +95,14 @@ public class RegistrationFragment extends Fragment {
             new Thread(() -> {
                 var userId = db.userDao().insert(user);
 
+                var nav = NavHostFragment.findNavController(this);
+                var opts = new NavOptions.Builder()
+                        .setPopUpTo(R.id.base_navigation, true)
+                        .build();
+
                 requireActivity().runOnUiThread(() -> {
+                    nav.navigate(R.id.nav_home, null, opts);
+
                     Toast.makeText(
                             requireContext(),
                             String.format(Locale.US, "User %d successfully registered.", userId),
