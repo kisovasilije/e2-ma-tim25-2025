@@ -33,4 +33,8 @@
         android:id="@+id/nav_shop"
         android:title="Shop" />
 
+    <item
+        android:id="@+id/nav_equipment"
+        android:title="Equipment " />
+
 </menu>

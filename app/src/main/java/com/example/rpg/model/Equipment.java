@@ -23,7 +23,7 @@ public class Equipment {
 
     public int armorType;
 
-    int ppBonus;
+    public int ppBonus;
 
     public Equipment(String name, int type, int armorType, int ppBonus) {
         this.name = name;

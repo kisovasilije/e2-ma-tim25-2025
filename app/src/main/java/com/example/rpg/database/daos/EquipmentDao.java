@@ -11,4 +11,7 @@ import java.util.List;
 public interface EquipmentDao {
     @Query("select * from equipments")
     List<Equipment> getAll();
+
+    @Query("select * from equipments where id = :id")
+    Equipment getById(long id);
 }

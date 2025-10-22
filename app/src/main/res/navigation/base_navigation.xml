@@ -34,4 +34,9 @@
         android:name="com.example.rpg.ui.fragments.ShopFragment"
         android:label="Shop" />
 
+    <fragment
+        android:id="@+id/nav_equipment"
+        android:name="com.example.rpg.ui.fragments.EquipmentFragment"
+        android:label="Equipment" />
+
 </navigation>
