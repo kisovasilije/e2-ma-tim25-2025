@@ -96,6 +96,7 @@
             android:text="Title: " />
 
         <TextView
+            android:id="@+id/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cao"
@@ -120,6 +121,7 @@
             android:text="Power points: " />
 
         <TextView
+            android:id="@+id/pp_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cao"

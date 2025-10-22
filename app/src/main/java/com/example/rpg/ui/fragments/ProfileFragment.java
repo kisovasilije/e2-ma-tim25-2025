@@ -19,6 +19,7 @@ import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentProfileBinding;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
@@ -33,6 +34,8 @@ public class ProfileFragment extends Fragment {
     private AppDatabase db;
 
     private User user;
+
+    private UserProgress progress;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -74,6 +77,8 @@ public class ProfileFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
+            if (user != null)
+                progress = db.userProgressDao().getById(user.id);
 
             requireActivity().runOnUiThread(() -> {
                 if (user != null) {
@@ -101,6 +106,8 @@ public class ProfileFragment extends Fragment {
         binding.avatarText.setText(user.avatar.toString());
         binding.usernameText.setText(user.username);
         binding.levelText.setText("10");
+        binding.titleText.setText(String.format("%s", progress.title));
+        binding.ppText.setText(String.format("%d", progress.pp));
     }
 
     private void toggleResetPassword(View v) {
