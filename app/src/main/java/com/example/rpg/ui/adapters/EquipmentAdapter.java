@@ -5,6 +5,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +43,16 @@ public class EquipmentAdapter extends ArrayAdapter<Equipment> {
 
         Equipment e = getItem(position);
         if (e == null) return v;
+
+        TextView name = v.findViewById(R.id.equipment_name_text);
+        TextView type = v.findViewById(R.id.equipment_type_text);
+        Button btn = v.findViewById(R.id.buy_equipment_button);
+
+        name.setText(String.format("Name: %s", e.name));
+        type.setText(String.format("Type: %s", e.type));
+
+        final View row = v;
+        btn.setOnClickListener(view -> onAction.onClick(e, position, row));
 
         return v;
     }

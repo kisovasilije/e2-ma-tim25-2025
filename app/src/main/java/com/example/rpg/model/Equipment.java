@@ -21,7 +21,7 @@ public class Equipment {
 
     public int type;
 
-    public Integer armorType;
+    public int armorType;
 
     int ppBonus;
 

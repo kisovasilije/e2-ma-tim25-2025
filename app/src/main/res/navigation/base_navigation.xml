@@ -29,4 +29,9 @@
         android:name="com.example.rpg.ui.fragments.LevelFragment"
         android:label="Levels" />
 
+    <fragment
+        android:id="@+id/nav_shop"
+        android:name="com.example.rpg.ui.fragments.ShopFragment"
+        android:label="Shop" />
+
 </navigation>

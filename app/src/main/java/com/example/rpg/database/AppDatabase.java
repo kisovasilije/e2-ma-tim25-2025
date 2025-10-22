@@ -6,20 +6,26 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.example.rpg.database.daos.EquipmentDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.daos.UserDao;
+import com.example.rpg.database.daos.UserEquipmentDao;
 import com.example.rpg.database.daos.UserProgressDao;
+import com.example.rpg.model.Equipment;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
 
 @Database(
         entities = {
                 User.class,
                 Task.class,
-                UserProgress.class
+                UserProgress.class,
+                Equipment.class,
+                UserEquipment.class
         },
-        version = 4
+        version = 6
 )
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
@@ -32,11 +38,17 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract UserProgressDao userProgressDao();
 
+    public abstract EquipmentDao equipmentDao();
+
+    public abstract UserEquipmentDao userEquipmentDao();
+
     public static AppDatabase get(Context ctx) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(ctx, AppDatabase.class, databaseName).build();
+                    INSTANCE = Room.databaseBuilder(ctx, AppDatabase.class, databaseName)
+                            .fallbackToDestructiveMigration()
+                            .build();
                 }
             }
         }

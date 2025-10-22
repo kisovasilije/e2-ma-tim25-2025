@@ -29,4 +29,8 @@
         android:id="@+id/nav_level"
         android:title="Levels" />
 
+    <item
+        android:id="@+id/nav_shop"
+        android:title="Shop" />
+
 </menu>

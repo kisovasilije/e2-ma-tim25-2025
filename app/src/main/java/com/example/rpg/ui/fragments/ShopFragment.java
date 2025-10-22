@@ -10,10 +10,19 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.databinding.FragmentShopBinding;
+import com.example.rpg.model.Equipment;
+import com.example.rpg.model.User;
+import com.example.rpg.model.UserEquipment;
+import com.example.rpg.prefs.AuthPrefs;
+import com.example.rpg.ui.adapters.EquipmentAdapter;
+
+import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,6 +32,10 @@ public class ShopFragment extends Fragment {
     private FragmentShopBinding binding;
 
     private AppDatabase db;
+
+    private EquipmentAdapter adapter;
+
+    private User user;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -50,5 +63,34 @@ public class ShopFragment extends Fragment {
         init();
     }
 
-    private void init() {}
+    private void init() {
+        var username = AuthPrefs.getIsAuthenticated(requireContext());
+
+        new Thread(() -> {
+            user = db.userDao().getByUsername(username);
+            var equipments = db.equipmentDao().getAll();
+
+            requireActivity().runOnUiThread(() -> {
+                ListView lw = binding.equipments;
+
+                adapter = new EquipmentAdapter(requireContext(), equipments, this::onAction);
+                lw.setAdapter(adapter);
+            });
+        }).start();
+    }
+
+    private void onAction(Equipment e, int pos, View row) {
+        new Thread(() -> {
+            var userEq = new UserEquipment(user.id, e.id, false);
+            db.userEquipmentDao().insert(userEq);
+
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(
+                        requireContext(),
+                        String.format(Locale.US, "Purchased."),
+                        Toast.LENGTH_SHORT
+                ).show();
+            });
+        }).start();
+    }
 }
