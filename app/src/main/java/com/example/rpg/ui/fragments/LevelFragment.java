@@ -76,7 +76,8 @@ public class LevelFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
-            progress = db.userProgressDao().getById(user.id);
+            if (user != null)
+                progress = db.userProgressDao().getById(user.id);
 
             requireActivity().runOnUiThread(() -> {
                 if (user != null) {
