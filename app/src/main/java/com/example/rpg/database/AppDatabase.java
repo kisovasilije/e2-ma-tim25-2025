@@ -34,8 +34,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract UserDao userDao();
     public abstract TaskDao taskDao();
     public abstract CategoryDao categoryDao();
-
-    // New DAOs
     public abstract PlayerDao playerDao();
     public abstract BossDao bossDao();
     public abstract EquipmentDao equipmentDao();
