@@ -5,6 +5,10 @@ import android.annotation.SuppressLint;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.example.rpg.database.daos.TaskDao;
+
+import java.util.List;
+
 @Entity(tableName = "user_progresses")
 public class UserProgress {
     @PrimaryKey
@@ -25,6 +29,8 @@ public class UserProgress {
 
     public String title;
 
+    public int coins;
+
     public UserProgress(long id, int xp, int level, int xpCap, int pp, int ppCap, String title) {
         this.id = id;
         this.xp = xp;
@@ -41,21 +47,39 @@ public class UserProgress {
 
     @SuppressLint("DefaultLocale")
     public void update(Task task) {
-        xp += task.xp;
-        pp += 20;
+//        xp += task.xp;
+//        pp += 20;
+//
+//        if (xp < xpCap && pp < ppCap) {
+//            return;
+//        }
+//
+//        if (xp >= xpCap) {
+//            xpCap = ((int) Math.ceil((double) (xpCap * 5) / 2 / 100.0)) * 100;
+//            level++;
+//            title = String.format("Title%d", level);
+//        }
+//
+//        if (pp >= ppCap) {
+//            ppCap = ((int) Math.ceil((double) (ppCap * 7) / 4 / 10.0)) * 10;
+//        }
+    }
 
-        if (xp < xpCap && pp < ppCap) {
-            return;
+    public double getSuccessRate(TaskDao taskDao, long stageId) {
+        if (taskDao == null) return 0;
+
+        List<Task> tasks = taskDao.getAllTasksForPlayerAndStage(this.id, stageId);
+
+        if (tasks == null || tasks.isEmpty()) return 0;
+
+        int total = tasks.size();
+        int done = 0;
+
+        for (Task t : tasks) {
+            if ("done".equalsIgnoreCase(t.status) || "completed".equalsIgnoreCase(t.status)) done++;
         }
 
-        if (xp >= xpCap) {
-            xpCap = ((int) Math.ceil((double) (xpCap * 5) / 2 / 100.0)) * 100;
-            level++;
-            title = String.format("Title%d", level);
-        }
+        return ((double) done / total) * 100.0;
 
-        if (pp >= ppCap) {
-            ppCap = ((int) Math.ceil((double) (ppCap * 7) / 4 / 10.0)) * 10;
-        }
     }
 }

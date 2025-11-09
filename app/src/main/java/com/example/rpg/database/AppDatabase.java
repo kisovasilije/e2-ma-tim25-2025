@@ -5,12 +5,17 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 
+import com.example.rpg.database.daos.BossDao;
+import com.example.rpg.database.daos.CategoryDao;
 import com.example.rpg.database.daos.EquipmentDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.daos.UserDao;
 import com.example.rpg.database.daos.UserEquipmentDao;
 import com.example.rpg.database.daos.UserProgressDao;
+import com.example.rpg.model.Boss;
+import com.example.rpg.model.Category;
 import com.example.rpg.model.Equipment;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
@@ -23,10 +28,13 @@ import com.example.rpg.model.UserProgress;
                 Task.class,
                 UserProgress.class,
                 Equipment.class,
-                UserEquipment.class
+                UserEquipment.class,
+                Boss.class,
+                Category.class
         },
-        version = 6
+        version = 7
 )
+@TypeConverters({Task.DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
@@ -41,6 +49,10 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract EquipmentDao equipmentDao();
 
     public abstract UserEquipmentDao userEquipmentDao();
+
+    public abstract CategoryDao categoryDao();
+
+    public abstract BossDao bossDao();
 
     public static AppDatabase get(Context ctx) {
         if (INSTANCE == null) {
