@@ -39,4 +39,20 @@
         android:name="com.example.rpg.ui.fragments.EquipmentFragment"
         android:label="Equipment" />
 
+    <fragment android:id="@+id/nav_category"
+        android:name="com.example.rpg.ui.fragments.CategoryFragment"
+        android:label="Categories" />
+
+    <fragment android:id="@+id/nav_task"
+        android:name="com.example.rpg.ui.fragments.TaskFragment"
+        android:label="Task" />
+
+    <fragment android:id="@+id/nav_battle"
+        android:name="com.example.rpg.ui.fragments.BattleFragment"
+        android:label="Battle" />
+
+    <fragment android:id="@+id/nav_calendar"
+        android:name="com.example.rpg.ui.fragments.CalendarFragment"
+        android:label="Calendar" />
+
 </navigation>
