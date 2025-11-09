@@ -27,6 +27,7 @@ import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
 import com.example.rpg.ui.adapters.TaskAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -122,8 +123,9 @@ public class LevelFragment extends Fragment {
 
     private void setTasks() {
         new Thread(() -> {
-            List<Task> tasks = db.taskDao().getByUserId(user.id);
+//            List<Task> tasks = db.taskDao().getByUserId(user.id);
 
+            List<Task> tasks = new ArrayList<>();
             requireActivity().runOnUiThread(() -> {
                 ListView lw = binding.tasks;
 
@@ -135,18 +137,18 @@ public class LevelFragment extends Fragment {
 
     private void onAction(Task t, int pos, View row) {
         new Thread(() -> {
-            t.isPassed = true;
-            requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
-            int rowsAffected = db.taskDao().passTask(t.id);
-            Log.i("RA UPDATE TASK", rowsAffected == 1 ? "1" : "Error passing task.");
-
-            var progress = db.userProgressDao().getById(user.id);
-            progress.update(t);
-            rowsAffected = db.userProgressDao().update(progress);
-            Log.i("RA UPDATE PROGRESS", rowsAffected == 1 ? "1" : "Error updating progress.");
-            if (rowsAffected > 0) {
-                requireActivity().runOnUiThread(() -> this.setStats(progress));
-            }
+//            t.isPassed = true;
+//            requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
+//            int rowsAffected = db.taskDao().passTask(t.id);
+//            Log.i("RA UPDATE TASK", rowsAffected == 1 ? "1" : "Error passing task.");
+//
+//            var progress = db.userProgressDao().getById(user.id);
+//            progress.update(t);
+//            rowsAffected = db.userProgressDao().update(progress);
+//            Log.i("RA UPDATE PROGRESS", rowsAffected == 1 ? "1" : "Error updating progress.");
+//            if (rowsAffected > 0) {
+//                requireActivity().runOnUiThread(() -> this.setStats(progress));
+//            }
         }).start();
     }
 }

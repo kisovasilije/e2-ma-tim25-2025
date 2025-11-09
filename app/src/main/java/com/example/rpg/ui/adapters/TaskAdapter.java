@@ -33,29 +33,29 @@ public class TaskAdapter extends ArrayAdapter<Task> {
     @Override
     public View getView(int pos, @Nullable View convert, @NonNull ViewGroup parent) {
         View v = convert;
-        if (v == null) {
-            v = LayoutInflater.from(getContext()).inflate(R.layout.task_row, parent, false);
-        }
-
-        Task t = getItem(pos);
-        if (t == null) return v;
-
-        TextView title = v.findViewById(R.id.task_title_text);
-        TextView xp = v.findViewById(R.id.task_xp_text);
-        Button btn = v.findViewById(R.id.pass_task_button);
-
-        title.setText(String.format("Task %s", t.name));
-        xp.setText(String.format("Xp: %s", t.xp));
-
-        if (t.isPassed) {
-            btn.setEnabled(false);
-        }
-        else {
-            final View row = v;
-            btn.setEnabled(true);
-            btn.setOnClickListener(view -> onAction.onClick(t, pos, row));
-        }
-
+//        if (v == null) {
+//            v = LayoutInflater.from(getContext()).inflate(R.layout.task_row, parent, false);
+//        }
+//
+//        Task t = getItem(pos);
+//        if (t == null) return v;
+//
+//        TextView title = v.findViewById(R.id.task_title_text);
+//        TextView xp = v.findViewById(R.id.task_xp_text);
+//        Button btn = v.findViewById(R.id.pass_task_button);
+//
+//        title.setText(String.format("Task %s", t.name));
+//        xp.setText(String.format("Xp: %s", t.xp));
+//
+//        if (t.isPassed) {
+//            btn.setEnabled(false);
+//        }
+//        else {
+//            final View row = v;
+//            btn.setEnabled(true);
+//            btn.setOnClickListener(view -> onAction.onClick(t, pos, row));
+//        }
+//
         return v;
     }
 }
