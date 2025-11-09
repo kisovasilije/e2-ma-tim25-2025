@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dayCard"
+    android:orientation="vertical"
+    android:padding="1dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFDDD"
+    android:divider="@android:color/darker_gray"
+    android:showDividers="middle|end"
+    android:dividerPadding="4dp">
+
+    <TextView
+        android:id="@+id/text_day_number"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp"/>
+
+    <!-- Divider automatically added here by showDividers="middle" -->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_tasks_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false"
+        android:paddingTop="4dp"/>
+
+</LinearLayout>

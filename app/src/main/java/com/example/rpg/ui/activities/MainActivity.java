@@ -17,6 +17,7 @@ import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.model.Player;
 import com.example.rpg.ui.fragments.BattleFragment;
+import com.example.rpg.ui.fragments.CalendarFragment;
 import com.example.rpg.ui.fragments.CategoryFragment;
 import com.example.rpg.ui.fragments.RegistrationFragment;
 import com.example.rpg.ui.fragments.TaskFragment;
@@ -91,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.nav_battle) {
             navigateToFragment(new BattleFragment());
+            return true;
+        } else if (id == R.id.nav_calendar) {
+            navigateToFragment(new CalendarFragment());
             return true;
         }
 
