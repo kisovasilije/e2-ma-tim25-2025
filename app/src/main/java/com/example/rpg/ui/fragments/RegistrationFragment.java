@@ -94,11 +94,7 @@ public class RegistrationFragment extends Fragment {
     private void registerRegisterButton() {
         binding.registerButton.setOnClickListener(v -> {
             var user = cvtBindingToUser(v);
-//            if (user == null) return;
-
-            user = new User("vasiljekiso@gmail.com", "kisovasilije", "kisova", Avatar.WARRIOR);
-
-            final User u = user;
+            if (user == null) return;
 
             authDao.create(user.email, user.password)
                     .addOnSuccessListener(authResult -> {
@@ -112,7 +108,7 @@ public class RegistrationFragment extends Fragment {
                         firebaseUser.sendEmailVerification();
 
                         new Thread(() -> {
-                            var userId = db.userDao().insert(u);
+                            var userId = db.userDao().insert(user);
                             var progress = UserProgress.getDefault(userId);
                             db.userProgressDao().insert(progress);
 
