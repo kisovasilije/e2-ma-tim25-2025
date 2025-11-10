@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.daos.AuthDao;
 import com.example.rpg.databinding.FragmentAuthBinding;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
@@ -25,20 +26,19 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Locale;
 
-/**
- * A simple {@link Fragment} subclass.
- * create an instance of this fragment.
- */
 public class AuthFragment extends Fragment {
     private FragmentAuthBinding binding;
 
     private AppDatabase db;
+
+    private AuthDao authDao;
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         db = AppDatabase.get(context.getApplicationContext());
+        authDao = new AuthDao();
     }
 
     @Override
@@ -79,54 +79,82 @@ public class AuthFragment extends Fragment {
                 return;
             }
 
-            new Thread(() -> {
-                var user = db.userDao().getByUsername(loginCreds.username);
-                if (user == null) {
-                    Snackbar
-                            .make(v, "User doesn't exist.", Snackbar.LENGTH_SHORT)
-                            .setBackgroundTint(Color.RED)
-                            .show();
+            authDao.signInWithEmailAndPassword(loginCreds.email, loginCreds.password)
+                    .addOnSuccessListener(result -> {
+                        var firebaseUser = authDao.getCurrentUser();
+                        if (firebaseUser == null) {
+                            Snackbar
+                                    .make(v, "User doesn't exist.", Snackbar.LENGTH_SHORT)
+                                    .setBackgroundTint(Color.RED)
+                                    .show();
 
-                    return;
-                }
+                            return;
+                        }
 
-                if (!user.password.equals(loginCreds.password)) {
-                    Snackbar
-                            .make(v, "Wrong password.", Snackbar.LENGTH_SHORT)
-                            .setBackgroundTint(Color.RED)
-                            .show();
+                        firebaseUser.reload()
+                                .addOnSuccessListener(ignored -> {
+                                    if (!firebaseUser.isEmailVerified()) {
+                                        Toast.makeText(getContext(),
+                                                "Email not verified",
+                                                Toast.LENGTH_SHORT
+                                        ).show();
+                                        authDao.signOut();
+                                        return;
+                                    }
 
-                    return;
-                }
+                                    new Thread(() -> {
+                                        var user = db.userDao().getByEmail(loginCreds.email);
+                                        if (user == null) {
+                                            Snackbar
+                                                    .make(v, "User doesn't exist.", Snackbar.LENGTH_SHORT)
+                                                    .setBackgroundTint(Color.RED)
+                                                    .show();
 
-                AuthPrefs.setUser(requireContext(), user.username);
+                                            return;
+                                        }
 
-                requireActivity().runOnUiThread(() -> {
-                    if(getContext() == null) return;
+                                        if (!user.password.equals(loginCreds.password)) {
+                                            Snackbar
+                                                    .make(v, "Wrong password.", Snackbar.LENGTH_SHORT)
+                                                    .setBackgroundTint(Color.RED)
+                                                    .show();
 
-                    if (getActivity() instanceof MainActivity) {
-                        ((MainActivity) getActivity()).setAuth(true);
-                    }
+                                            return;
+                                        }
 
-                    var nav = NavHostFragment.findNavController(this);
-                    var opts = new NavOptions.Builder()
-                            .setPopUpTo(R.id.base_navigation, true)
-                            .build();
+                                        AuthPrefs.setUser(requireContext(), user.username);
 
-                    nav.navigate(R.id.nav_home, null, opts);
+                                        requireActivity().runOnUiThread(() -> {
+                                            if(getContext() == null) return;
 
-                    Toast.makeText(
-                            requireContext(),
-                            String.format(Locale.US, "User %s successfully authenticated.", user.username),
-                            Toast.LENGTH_SHORT
-                    ).show();
-                });
-            }).start();
+                                            if (getActivity() instanceof MainActivity) {
+                                                ((MainActivity) getActivity()).setAuth(true);
+                                            }
+
+                                            var nav = NavHostFragment.findNavController(this);
+                                            var opts = new NavOptions.Builder()
+                                                    .setPopUpTo(R.id.base_navigation, true)
+                                                    .build();
+
+                                            nav.navigate(R.id.nav_home, null, opts);
+
+                                            Toast.makeText(
+                                                    requireContext(),
+                                                    String.format(Locale.US, "User %s successfully authenticated.", user.username),
+                                                    Toast.LENGTH_SHORT
+                                            ).show();
+                                        });
+                                    }).start();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         });
     }
 
     private LoginCredentialsDto cvtBindingToLoginCreds() {
-        var username = binding.usernameInput.getText().toString();
+        var username = binding.emailInput.getText().toString();
         var password = binding.passwordInput.getText().toString();
 
         if (username.isEmpty() || password.isEmpty()) return null;

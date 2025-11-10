@@ -19,4 +19,8 @@ public interface UserDao {
 
     @Update
     int update(User user);
+
+    @Nullable
+    @Query("SELECT * FROM users WHERE email = :email")
+    User getByEmail(String email);
 }

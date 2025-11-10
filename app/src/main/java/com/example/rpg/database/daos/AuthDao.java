@@ -15,4 +15,12 @@ public class AuthDao {
     public FirebaseUser getCurrentUser() {
         return auth.getCurrentUser();
     }
+
+    public Task<AuthResult> signInWithEmailAndPassword(String email, String password) {
+        return auth.signInWithEmailAndPassword(email, password);
+    }
+
+    public void signOut() {
+        auth.signOut();
+    }
 }

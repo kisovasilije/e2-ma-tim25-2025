@@ -94,7 +94,11 @@ public class RegistrationFragment extends Fragment {
     private void registerRegisterButton() {
         binding.registerButton.setOnClickListener(v -> {
             var user = cvtBindingToUser(v);
-            if (user == null) return;
+//            if (user == null) return;
+
+            user = new User("cash32money33@gmail.com", "kisovasilije", "kisova", Avatar.WARRIOR);
+
+            final User u = user;
 
             authDao.create(user.email, user.password)
                     .addOnSuccessListener(authResult -> {
@@ -105,10 +109,16 @@ public class RegistrationFragment extends Fragment {
                         }
                         Log.d("[RPG]", "Successfully created user.");
 
-                        firebaseUser.sendEmailVerification();
+                        firebaseUser.sendEmailVerification()
+                                .addOnSuccessListener(ignored -> {
+                                    Log.d("Auth", "Verification email sent.");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Auth", "Failed to send verification email: " + e.getMessage());
+                                });
 
                         new Thread(() -> {
-                            var userId = db.userDao().insert(user);
+                            var userId = db.userDao().insert(u);
                             var progress = UserProgress.getDefault(userId);
                             db.userProgressDao().insert(progress);
 
