@@ -9,8 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.room.Room;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,15 +19,15 @@ import android.widget.Toast;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.daos.AuthDao;
 import com.example.rpg.databinding.FragmentRegistrationBinding;
 import com.example.rpg.model.Avatar;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserProgress;
-import com.example.rpg.ui.activities.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Locale;
-import java.util.concurrent.Executors;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -36,6 +36,8 @@ public class RegistrationFragment extends Fragment {
     private FragmentRegistrationBinding binding;
 
     private AppDatabase db;
+
+    private AuthDao authDao;
 
     public RegistrationFragment() {
         // Required empty public constructor
@@ -46,6 +48,7 @@ public class RegistrationFragment extends Fragment {
         super.onAttach(context);
 
         db = AppDatabase.get(context.getApplicationContext());
+        authDao = new AuthDao();
     }
 
     @Override
@@ -91,28 +94,55 @@ public class RegistrationFragment extends Fragment {
     private void registerRegisterButton() {
         binding.registerButton.setOnClickListener(v -> {
             var user = cvtBindingToUser(v);
-            if (user == null) return;
+//            if (user == null) return;
 
-            new Thread(() -> {
-                var userId = db.userDao().insert(user);
-                var progress = UserProgress.getDefault(userId);
-                db.userProgressDao().insert(progress);
+            user = new User("cash32money33@gmail.com", "kisovasilije", "kisova", Avatar.WARRIOR);
 
-                var nav = NavHostFragment.findNavController(this);
-                var opts = new NavOptions.Builder()
-                        .setPopUpTo(R.id.base_navigation, true)
-                        .build();
+            final User u = user;
 
-                requireActivity().runOnUiThread(() -> {
-                    nav.navigate(R.id.nav_home, null, opts);
+            authDao.create(user.email, user.password)
+                    .addOnSuccessListener(authResult -> {
+                        FirebaseUser firebaseUser = authDao.getCurrentUser();
+                        if (firebaseUser == null) {
+                            Toast.makeText(getContext(), "Unexpected error", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        Log.d("[RPG]", "Successfully created user.");
 
-                    Toast.makeText(
-                            requireContext(),
-                            String.format(Locale.US, "User %d successfully registered.", userId),
-                            Toast.LENGTH_SHORT
-                    ).show();
-                });
-            }).start();
+                        firebaseUser.sendEmailVerification()
+                                .addOnSuccessListener(ignored -> {
+                                    Log.d("Auth", "Verification email sent.");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Auth", "Failed to send verification email: " + e.getMessage());
+                                });
+
+                        new Thread(() -> {
+                            var userId = db.userDao().insert(u);
+                            var progress = UserProgress.getDefault(userId);
+                            db.userProgressDao().insert(progress);
+
+                            var nav = NavHostFragment.findNavController(this);
+                            var opts = new NavOptions.Builder()
+                                    .setPopUpTo(R.id.base_navigation, true)
+                                    .build();
+
+                            requireActivity().runOnUiThread(() -> {
+                                nav.navigate(R.id.nav_home, null, opts);
+
+                                Toast.makeText(
+                                        requireContext(),
+                                        String.format(Locale.US, "User %d successfully registered.", userId),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            });
+                        }).start();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Auth error: " + e.getMessage(),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    });
         });
     }
 

@@ -1,9 +1,12 @@
 package com.example.rpg.model;
 
 public enum Avatar {
-    AVATARA,
-    AVATARB,
-    AVATARC,
-    AVATARD,
-    AVATARE
+    WARRIOR,
+    MAGE,
+    ROGUE,
+    ARCHER,
+    CLERIC,
+    PALADIN,
+    BERSERKER,
+    NECROMANCER
 }
