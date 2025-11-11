@@ -32,7 +32,7 @@ import com.example.rpg.model.UserProgress;
                 Boss.class,
                 Category.class
         },
-        version = 7
+        version = 8
 )
 @TypeConverters({Task.DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {

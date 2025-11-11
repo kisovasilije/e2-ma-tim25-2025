@@ -23,6 +23,16 @@ import java.util.Date;
 )
 @TypeConverters(Task.DateConverter.class)
 public class Task {
+    public static String ACTIVE = "active";
+
+    public static String DONE = "done";
+
+    public static String CANCELED = "canceled";
+
+    public static String PAUSED = "paused";
+
+    public static String UNFINISHED = "unfinished";
+
 
     @PrimaryKey(autoGenerate = true)
     public long id;
@@ -35,7 +45,6 @@ public class Task {
 
     @ColumnInfo(name = "category_id")
     public Long categoryId;
-
 
     public long userId;
 
@@ -102,5 +111,17 @@ public class Task {
         public static Date toDate(Long timestamp) {
             return timestamp == null ? null : new Date(timestamp);
         }
+    }
+
+    public int getTotalXpForLevel(int level) {
+        int importanceXp = importanceXP;
+        int difficultyXp = difficultyXP;
+
+        for (int i = 1; i < level; i++) {
+            importanceXp = (int) Math.ceil(importanceXp * 3.0 / 2.0);
+            difficultyXp = (int) Math.ceil(difficultyXp * 3.0 / 2.0);
+        }
+
+        return importanceXp + difficultyXp;
     }
 }

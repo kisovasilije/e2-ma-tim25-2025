@@ -108,7 +108,7 @@ public class LevelFragment extends Fragment {
         binding.titleText.setText(progress.title);
         binding.ppText.setText(String.format("%d", progress.pp));
         binding.xpText.setText(String.format("%d", progress.xp));
-        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
+//        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
         binding.levelText.setText(String.format("%d", progress.level));
     }
 
@@ -117,7 +117,7 @@ public class LevelFragment extends Fragment {
         binding.titleText.setText(progress.title);
         binding.ppText.setText(String.format("%d", progress.pp));
         binding.xpText.setText(String.format("%d", progress.xp));
-        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
+//        binding.xpLeftText.setText(String.format("%d", progress.xpCap - progress.xp));
         binding.levelText.setText(String.format("%d", progress.level));
     }
 
