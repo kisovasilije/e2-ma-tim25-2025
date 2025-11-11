@@ -1,6 +1,8 @@
 package com.example.rpg.ui.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,10 +11,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
+
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.model.Task;
+import com.example.rpg.model.User;
+import com.example.rpg.model.UserProgress;
+import com.example.rpg.prefs.AuthPrefs;
+import com.example.rpg.ui.activities.MainActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -29,12 +38,25 @@ public class TaskDetailFragment extends Fragment {
     private TextView textName, textDesc, textCategory, textStatus,
             textDifficulty, textImportance, textExecution, textRepeating;
 
+    private User user;
+
+    private UserProgress progress;
+
+    private AppDatabase db;
+
     public static TaskDetailFragment newInstance(long taskId) {
         TaskDetailFragment fragment = new TaskDetailFragment();
         Bundle args = new Bundle();
         args.putLong(ARG_TASK_ID, taskId);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+
+        db = AppDatabase.get(context.getApplicationContext());
     }
 
     @Override
@@ -69,9 +91,9 @@ public class TaskDetailFragment extends Fragment {
 
         loadTask();
 
-        btnDone.setOnClickListener(v -> updateStatus("done"));
-        btnPaused.setOnClickListener(v -> updateStatus("paused"));
-        btnCancelled.setOnClickListener(v -> updateStatus("cancelled"));
+        btnDone.setOnClickListener(v -> updateStatus(Task.DONE));
+        btnPaused.setOnClickListener(v -> updateStatus(Task.PAUSED));
+        btnCancelled.setOnClickListener(v -> updateStatus(Task.CANCELED));
 
         btnEdit.setOnClickListener(v -> {
             if (getParentFragment() instanceof TaskFragment) {
@@ -92,6 +114,43 @@ public class TaskDetailFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        init();
+    }
+
+    private void init() {
+        var username = AuthPrefs.getIsAuthenticated(requireContext());
+        Log.i("USERNAME", username != null ? username : "NO USERNAME");
+
+        new Thread(() -> {
+            user = db.userDao().getByUsername(username);
+            if (user != null)
+                progress = db.userProgressDao().getById(user.id);
+
+            requireActivity().runOnUiThread(() -> {
+                if (user != null) {
+                    return;
+                }
+
+                if(getContext() == null) return;
+
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).setAuth(true);
+                }
+
+                var nav = NavHostFragment.findNavController(this);
+                var opts = new NavOptions.Builder()
+                        .setPopUpTo(R.id.base_navigation, true)
+                        .build();
+
+                nav.navigate(R.id.nav_login, null, opts);
+            });
+        }).start();
     }
 
     private void loadTask() {
@@ -120,12 +179,24 @@ public class TaskDetailFragment extends Fragment {
         task.status = newStatus;
         Executors.newSingleThreadExecutor().execute(() -> {
             taskDao.update(task);
-            requireActivity().runOnUiThread(() -> {
-                textStatus.setText("Status: " + task.status);
-                if (getParentFragment() instanceof TaskFragment) {
-                    ((TaskFragment) getParentFragment()).refreshTasks();
-                }
-            });
+
+            var progress = db.userProgressDao().getById(user.id);
+            if (progress == null) {
+                return;
+            }
+
+            progress.update(task);
+            int rowsAffected = db.userProgressDao().update(progress);
+            if (rowsAffected > 0) {
+                Log.d("[RPG]", "Task passed. Progress updated.");
+
+                requireActivity().runOnUiThread(() -> {
+                    textStatus.setText("Status: " + task.status);
+                    if (getParentFragment() instanceof TaskFragment) {
+                        ((TaskFragment) getParentFragment()).refreshTasks();
+                    }
+                });
+            }
         });
     }
 }
