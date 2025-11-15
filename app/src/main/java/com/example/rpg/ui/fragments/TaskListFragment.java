@@ -107,7 +107,6 @@ public class TaskListFragment extends Fragment {
             holder.textStatus.setText("Status: " + (task.status != null ? task.status : "Unknown"));
 
 
-            // Click: Open TaskDetailFragment
             boolean clickable = "active".equals(task.status) || "paused".equals(task.status);
 
             holder.itemView.setEnabled(clickable);

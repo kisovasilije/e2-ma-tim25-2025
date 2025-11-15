@@ -22,7 +22,9 @@ import com.example.rpg.database.daos.CategoryDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.model.Category;
 import com.example.rpg.model.Task;
+import com.example.rpg.model.User;
 import com.example.rpg.model.UserProgress;
+import com.example.rpg.prefs.AuthPrefs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -47,6 +49,10 @@ public class TaskFragment extends Fragment {
 
     private UserProgress progress;
 
+    private final java.util.Map<Long, Boolean> countdownActive = new java.util.HashMap<>();
+    // NEW: track which tasks already have a countdown started (per fragment lifetime)
+    private final java.util.Set<Long> countdownInitialized = new java.util.HashSet<>();
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -64,7 +70,13 @@ public class TaskFragment extends Fragment {
         viewPager = view.findViewById(R.id.view_pager);
 
         Executors.newSingleThreadExecutor().execute(() -> {
-            progress = db.userProgressDao().getById(1); // To be refactored
+            var username = AuthPrefs.getIsAuthenticated(requireContext());
+            if (username != null) {
+                User user = db.userDao().getByUsername(username);
+                if (user != null) {
+                    progress = db.userProgressDao().getById(user.id);
+                }
+            }
         });
 
         fabAdd.setOnClickListener(v -> showTaskDialog(null));
@@ -77,6 +89,14 @@ public class TaskFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Task> allTasks = taskDao.getCurrentAndFutureTasks(new Date());
             List<Category> allCategories = categoryDao.getAll();
+
+            // NEW: for any tasks that are already ACTIVE when loaded from DB, start countdown once
+            for (Task t : allTasks) {
+                if ("active".equalsIgnoreCase(t.status) && !countdownInitialized.contains(t.id)) {
+                    countdownInitialized.add(t.id);
+                    startUnfinishedCountdown(t.id);
+                }
+            }
 
             requireActivity().runOnUiThread(() -> {
                 nonRepeatingFragment = TaskListFragment.newInstance(allTasks, allCategories, false);
@@ -112,6 +132,42 @@ public class TaskFragment extends Fragment {
         });
     }
 
+    public void startUnfinishedCountdown(long taskId) {
+
+        // Cancel previous countdown
+        countdownActive.put(taskId, false);
+
+        // Mark new countdown active
+        countdownActive.put(taskId, true);
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ignored) {}
+
+            Boolean stillValid = countdownActive.get(taskId);
+            if (stillValid == null || !stillValid) return;
+
+            Task t = taskDao.getById(taskId);
+            if (t == null) return;
+
+            if ("active".equalsIgnoreCase(t.status)) {
+                t.status = "unfinished";
+                taskDao.update(t);
+            }
+
+            if (isAdded()) {
+                requireActivity().runOnUiThread(this::refreshTasks);
+            }
+        });
+    }
+
+    public void cancelCountdown(long taskId) {
+        countdownActive.put(taskId, false);
+        countdownInitialized.remove(taskId); // so future auto-starts won’t re-trigger for changed tasks
+    }
+
     public void showTaskDialog(@Nullable Task task) {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Category> categories = categoryDao.getAll();
@@ -130,9 +186,6 @@ public class TaskFragment extends Fragment {
                 CheckBox checkRepeating = dialogView.findViewById(R.id.checkbox_repeating);
                 EditText inputInterval = dialogView.findViewById(R.id.input_repeat_interval);
                 Spinner spinnerUnit = dialogView.findViewById(R.id.spinner_repeat_unit);
-                DatePicker dateExecution = dialogView.findViewById(R.id.date_execution);
-                DatePicker dateRepeatStart = dialogView.findViewById(R.id.date_repeat_start);
-                DatePicker dateRepeatEnd = dialogView.findViewById(R.id.date_repeat_end);
 
                 List<String> catNames = new ArrayList<>();
                 for (Category c : categories) catNames.add(c.name);
@@ -175,17 +228,25 @@ public class TaskFragment extends Fragment {
                             ? Integer.parseInt(inputInterval.getText().toString()) : 0;
                     String unit = repeating ? spinnerUnit.getSelectedItem().toString() : null;
 
-                    Calendar execCal = Calendar.getInstance();
-                    execCal.set(dateExecution.getYear(), dateExecution.getMonth(), dateExecution.getDayOfMonth());
-                    Date executionTime = execCal.getTime();
+                    // NEW: execution date removed, it becomes set when task is DONE
+                    Date executionTime = null;
 
-                    Calendar startCal = Calendar.getInstance();
-                    startCal.set(dateRepeatStart.getYear(), dateRepeatStart.getMonth(), dateRepeatStart.getDayOfMonth());
-                    Date repeatStart = repeating ? startCal.getTime() : null;
+                    // NEW: auto repeating date calculation
+                    Date repeatStart = null;
+                    Date repeatEnd = null;
 
-                    Calendar endCal = Calendar.getInstance();
-                    endCal.set(dateRepeatEnd.getYear(), dateRepeatEnd.getMonth(), dateRepeatEnd.getDayOfMonth());
-                    Date repeatEnd = repeating ? endCal.getTime() : null;
+                    if (repeating) {
+                        Calendar cal = Calendar.getInstance();
+                        repeatStart = cal.getTime();  // today
+
+                        if ("Day".equals(unit)) {
+                            cal.add(Calendar.DAY_OF_YEAR, interval);
+                        } else {
+                            cal.add(Calendar.WEEK_OF_YEAR, interval);
+                        }
+
+                        repeatEnd = cal.getTime();
+                    }
 
                     int difficultyXP = getDifficultyXPFromIndex(spinnerDifficulty.getSelectedItemPosition());
                     int importanceXP = getImportanceXPFromIndex(spinnerImportance.getSelectedItemPosition());
@@ -205,17 +266,22 @@ public class TaskFragment extends Fragment {
                             repeatEnd,
                             difficultyXP,
                             importanceXP,
-                            executionTime
+                            executionTime // null for now
                     );
 
                     newTask.status = (task == null) ? "active" : spinnerStatus.getSelectedItem().toString();
 
                     Executors.newSingleThreadExecutor().execute(() -> {
-                        if (task == null) taskDao.insert(newTask);
-                        else {
+                        if (task == null) {
+                            long newId = taskDao.insert(newTask);
+                            countdownInitialized.add(newId);
+                            startUnfinishedCountdown(newId);
+                        } else {
                             newTask.id = task.id;
                             taskDao.update(newTask);
+                            cancelCountdown(task.id);
                         }
+
                         requireActivity().runOnUiThread(this::refreshTasks);
                     });
                 });

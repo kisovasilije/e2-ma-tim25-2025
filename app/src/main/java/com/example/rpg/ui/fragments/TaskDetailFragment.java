@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -43,9 +44,7 @@ public class TaskDetailFragment extends Fragment {
             textDifficulty, textImportance, textExecution, textRepeating;
 
     private User user;
-
     private UserProgress progress;
-
     private AppDatabase db;
 
     public static TaskDetailFragment newInstance(long taskId) {
@@ -59,7 +58,6 @@ public class TaskDetailFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-
         db = AppDatabase.get(context.getApplicationContext());
     }
 
@@ -76,6 +74,7 @@ public class TaskDetailFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_task_detail, container, false);
 
         textName = view.findViewById(R.id.text_task_name);
@@ -101,7 +100,12 @@ public class TaskDetailFragment extends Fragment {
         btnEdit.setOnClickListener(v -> showEditDialog());
         btnDelete.setOnClickListener(v -> {
             Executors.newSingleThreadExecutor().execute(() -> {
+                if (task != null && getParentFragment() instanceof TaskFragment) {
+                    ((TaskFragment) getParentFragment()).cancelCountdown(task.id);
+                }
+
                 taskDao.delete(task);
+
                 requireActivity().runOnUiThread(() -> {
                     if (getParentFragment() instanceof TaskFragment) {
                         ((TaskFragment) getParentFragment()).refreshTasks();
@@ -111,14 +115,12 @@ public class TaskDetailFragment extends Fragment {
             });
         });
 
-
         return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         init();
     }
 
@@ -132,11 +134,9 @@ public class TaskDetailFragment extends Fragment {
                 progress = db.userProgressDao().getById(user.id);
 
             requireActivity().runOnUiThread(() -> {
-                if (user != null) {
-                    return;
-                }
+                if (user != null) return;
 
-                if(getContext() == null) return;
+                if (getContext() == null) return;
 
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).setAuth(true);
@@ -152,10 +152,10 @@ public class TaskDetailFragment extends Fragment {
         }).start();
     }
 
-
     private void togglePauseStatus(Button btnPaused) {
         if (task == null) return;
 
+        String oldStatus = task.status;
         String newStatus;
 
         if (Task.PAUSED.equals(task.status)) {
@@ -174,14 +174,22 @@ public class TaskDetailFragment extends Fragment {
             requireActivity().runOnUiThread(() -> {
                 textStatus.setText("Status: " + task.status);
 
-                if (getParentFragment() instanceof TaskFragment)
-                    ((TaskFragment) getParentFragment()).refreshTasks();
+                if (getParentFragment() instanceof TaskFragment) {
+                    TaskFragment parent = (TaskFragment) getParentFragment();
+
+                    if (Task.ACTIVE.equals(newStatus) && Task.PAUSED.equals(oldStatus)) {
+                        parent.startUnfinishedCountdown(task.id);
+                    } else {
+                        parent.cancelCountdown(task.id);
+                    }
+
+                    parent.refreshTasks();
+                }
 
                 getParentFragmentManager().popBackStack();
             });
         });
     }
-
 
     private void loadTask() {
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -189,6 +197,7 @@ public class TaskDetailFragment extends Fragment {
             if (task != null) {
                 requireActivity().runOnUiThread(() -> {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
                     textName.setText(task.name);
                     textDesc.setText(task.description);
                     textCategory.setText("Category #" + task.categoryId);
@@ -196,9 +205,11 @@ public class TaskDetailFragment extends Fragment {
                     textDifficulty.setText("Difficulty XP: " + task.difficultyXP);
                     textImportance.setText("Importance XP: " + task.importanceXP);
                     textExecution.setText("Execution: " + sdf.format(task.executionTime));
-                    textRepeating.setText(task.isRepeating ? "Repeats every " + task.repeatInterval + " " + task.repeatUnit
+                    textRepeating.setText(task.isRepeating
+                            ? "Repeats every " + task.repeatInterval + " " + task.repeatUnit
                             + " from " + (task.repeatStart != null ? sdf.format(task.repeatStart) : "?")
-                            + " to " + (task.repeatEnd != null ? sdf.format(task.repeatEnd) : "?") : "Not repeating");
+                            + " to " + (task.repeatEnd != null ? sdf.format(task.repeatEnd) : "?")
+                            : "Not repeating");
 
                     Button btnPaused = requireView().findViewById(R.id.btn_status_paused);
                     if (Task.PAUSED.equals(task.status)) {
@@ -223,13 +234,11 @@ public class TaskDetailFragment extends Fragment {
         EditText impInput = dialogView.findViewById(R.id.edit_task_importance);
         DatePicker execPicker = dialogView.findViewById(R.id.edit_task_execution);
 
-        // PREFILL EXISTING VALUES
         nameInput.setText(task.name);
         descInput.setText(task.description);
         diffInput.setText(String.valueOf(task.difficultyXP));
         impInput.setText(String.valueOf(task.importanceXP));
 
-        // Execution date -> date picker
         if (task.executionTime != null) {
             Calendar cal = Calendar.getInstance();
             cal.setTime(task.executionTime);
@@ -240,6 +249,11 @@ public class TaskDetailFragment extends Fragment {
                 .setTitle("Edit Task")
                 .setView(dialogView)
                 .setPositiveButton("Save", (dialog, which) -> {
+
+                    if (getParentFragment() instanceof TaskFragment) {
+                        ((TaskFragment) getParentFragment()).cancelCountdown(task.id);
+                    }
+
                     String newName = nameInput.getText().toString().trim();
                     String newDesc = descInput.getText().toString().trim();
                     String diffStr = diffInput.getText().toString().trim();
@@ -252,7 +266,6 @@ public class TaskDetailFragment extends Fragment {
                     calendar.set(execPicker.getYear(), execPicker.getMonth(), execPicker.getDayOfMonth());
                     Date newExecTime = calendar.getTime();
 
-                    // Update object
                     task.name = newName;
                     task.description = newDesc;
                     task.difficultyXP = newDiff;
@@ -263,15 +276,11 @@ public class TaskDetailFragment extends Fragment {
                         taskDao.update(task);
 
                         requireActivity().runOnUiThread(() -> {
-                            // Refresh the task list on parent
                             if (getParentFragment() instanceof TaskFragment) {
                                 ((TaskFragment) getParentFragment()).refreshTasks();
                             }
-
-                            // Close TaskDetailFragment (go back to the list)
                             getParentFragmentManager().popBackStack();
                         });
-
                     });
                 })
                 .setNegativeButton("Cancel", null)
@@ -285,22 +294,15 @@ public class TaskDetailFragment extends Fragment {
         task.status = newStatus;
 
         Executors.newSingleThreadExecutor().execute(() -> {
-
             taskDao.update(task);
-
-            var progress = db.userProgressDao().getById(user.id);
-            if (progress != null) {
-                progress.update(task);
-                db.userProgressDao().update(progress);
-            }
 
             if (isAdded() && getActivity() != null) {
                 requireActivity().runOnUiThread(() -> {
 
-                    textStatus.setText("Status: " + task.status);
-
                     if (getParentFragment() instanceof TaskFragment) {
-                        ((TaskFragment) getParentFragment()).refreshTasks();
+                        TaskFragment parent = (TaskFragment) getParentFragment();
+                        parent.cancelCountdown(task.id);
+                        parent.refreshTasks();
                     }
 
                     getParentFragment().getChildFragmentManager().popBackStack();
@@ -308,5 +310,4 @@ public class TaskDetailFragment extends Fragment {
             }
         });
     }
-
 }
