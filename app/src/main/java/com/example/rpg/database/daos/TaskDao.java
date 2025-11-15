@@ -29,7 +29,7 @@ public interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
     Task getById(long id);
 
-    @Query("SELECT * FROM tasks WHERE status = 'active' OR (execution_time >= :today)")
+    @Query("SELECT * FROM tasks WHERE status != 'unfinished' OR (execution_time >= :today)")
     List<Task> getCurrentAndFutureTasks(Date today);
 
     @Query("SELECT * FROM tasks WHERE userId = :userId AND stageId = :stageId")

@@ -67,8 +67,7 @@ public class BattleFragment extends Fragment {
         executor.execute(() -> {
             taskDao = AppDatabase.get(requireContext()).taskDao();
 
-            progress = AppDatabase.get(requireContext()).userProgressDao().getById(1); // To be refactored
-//            if (progress == null) progress = new Player("Hero", 1, 100, 100);
+            progress = AppDatabase.get(requireContext()).userProgressDao().getById(1);
 
             currentBoss = AppDatabase.get(requireContext())
                     .bossDao()

@@ -53,6 +53,7 @@ public class TaskListFragment extends Fragment {
         return view;
     }
 
+
     public void updateTasks(List<Task> newTasks) {
         this.allTasks = newTasks != null ? newTasks : new ArrayList<>();
 
@@ -67,6 +68,13 @@ public class TaskListFragment extends Fragment {
             emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         }
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateTasks(allTasks);
+    }
+
 
     private static class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
@@ -110,6 +118,7 @@ public class TaskListFragment extends Fragment {
                 }
             });
         }
+
 
         @Override
         public int getItemCount() {
