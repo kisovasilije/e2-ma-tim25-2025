@@ -108,15 +108,25 @@ public class TaskListFragment extends Fragment {
 
 
             // Click: Open TaskDetailFragment
-            holder.itemView.setOnClickListener(v -> {
-                if (parentFragment.getParentFragmentManager() != null) {
-                    parentFragment.getParentFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_task_detail, TaskDetailFragment.newInstance(task.id))
-                            .addToBackStack(null)
-                            .commit();
-                }
-            });
+            boolean clickable = "active".equals(task.status) || "paused".equals(task.status);
+
+            holder.itemView.setEnabled(clickable);
+            holder.itemView.setAlpha(clickable ? 1f : 0.4f);
+
+            if (clickable) {
+                holder.itemView.setOnClickListener(v -> {
+                    if (parentFragment.getParentFragmentManager() != null) {
+                        parentFragment.getParentFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_task_detail, TaskDetailFragment.newInstance(task.id))
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                });
+            } else {
+                holder.itemView.setOnClickListener(null);
+            }
+
         }
 
 
