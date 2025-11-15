@@ -60,20 +60,5 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
-        <DatePicker
-            android:id="@+id/date_execution"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <DatePicker
-            android:id="@+id/date_repeat_start"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <DatePicker
-            android:id="@+id/date_repeat_end"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
     </LinearLayout>
 </ScrollView>

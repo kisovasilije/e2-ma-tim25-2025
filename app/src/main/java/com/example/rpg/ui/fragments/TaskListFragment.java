@@ -53,6 +53,7 @@ public class TaskListFragment extends Fragment {
         return view;
     }
 
+
     public void updateTasks(List<Task> newTasks) {
         this.allTasks = newTasks != null ? newTasks : new ArrayList<>();
 
@@ -67,6 +68,13 @@ public class TaskListFragment extends Fragment {
             emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         }
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateTasks(allTasks);
+    }
+
 
     private static class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
@@ -99,17 +107,27 @@ public class TaskListFragment extends Fragment {
             holder.textStatus.setText("Status: " + (task.status != null ? task.status : "Unknown"));
 
 
-            // Click: Open TaskDetailFragment
-            holder.itemView.setOnClickListener(v -> {
-                if (parentFragment.getParentFragmentManager() != null) {
-                    parentFragment.getParentFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_task_detail, TaskDetailFragment.newInstance(task.id))
-                            .addToBackStack(null)
-                            .commit();
-                }
-            });
+            boolean clickable = "active".equals(task.status) || "paused".equals(task.status);
+
+            holder.itemView.setEnabled(clickable);
+            holder.itemView.setAlpha(clickable ? 1f : 0.4f);
+
+            if (clickable) {
+                holder.itemView.setOnClickListener(v -> {
+                    if (parentFragment.getParentFragmentManager() != null) {
+                        parentFragment.getParentFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_task_detail, TaskDetailFragment.newInstance(task.id))
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                });
+            } else {
+                holder.itemView.setOnClickListener(null);
+            }
+
         }
+
 
         @Override
         public int getItemCount() {
