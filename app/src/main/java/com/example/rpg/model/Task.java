@@ -77,13 +77,15 @@ public class Task {
 
     @ColumnInfo(name = "execution_time")
     public Date executionTime;
+    @ColumnInfo(name = "completion_time")
+    public Date completionTime;
 
     @ColumnInfo(name = "status")
     public String status; // "active", "done", "canceled", "paused", "unfinished"
 
     public Task(String name, String description, Long categoryId, long userId, Long stageId,
                 boolean isRepeating, int repeatInterval, String repeatUnit, Date repeatStart, Date repeatEnd,
-                int difficultyXP, int importanceXP, Date executionTime) {
+                int difficultyXP, int importanceXP, int totalXP, Date executionTime, Date completionTime) {
         this.name = name;
         this.description = description;
         this.categoryId = categoryId;
@@ -98,6 +100,7 @@ public class Task {
         this.importanceXP = importanceXP;
         this.totalXP = difficultyXP + importanceXP;
         this.executionTime = executionTime;
+        this.completionTime = completionTime;
         this.status = "active";
     }
 
@@ -113,7 +116,7 @@ public class Task {
         }
     }
 
-    public int getTotalXpForLevel(int level) {
+    /*public int getTotalXpForLevel(int level) {
         int importanceXp = importanceXP;
         int difficultyXp = difficultyXP;
 
@@ -123,5 +126,5 @@ public class Task {
         }
 
         return importanceXp + difficultyXp;
-    }
+    }*/
 }

@@ -57,7 +57,7 @@ public class UserProgress {
 
     @SuppressLint("DefaultLocale")
     public void update(Task task) {
-        xp += task.getTotalXpForLevel(level);
+        xp += task.totalXP;
         if (!isLevelPassed()) {
             return;
         }
@@ -68,7 +68,7 @@ public class UserProgress {
         upgradeTitle();
     }
 
-    public double getSuccessRate(TaskDao taskDao, long stageId) {
+    /*public double getSuccessRate(TaskDao taskDao, long stageId) {
         if (taskDao == null) return 0;
 
         List<Task> tasks = taskDao.getAllTasksForPlayerAndStage(this.id, stageId);
@@ -83,7 +83,7 @@ public class UserProgress {
         }
 
         return ((double) done / total) * 100.0;
-    }
+    }*/
 
     private boolean isLevelPassed() {
         return xp > getCurrentXpCap();

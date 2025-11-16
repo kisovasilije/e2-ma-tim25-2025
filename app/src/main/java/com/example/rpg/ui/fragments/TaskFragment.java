@@ -3,6 +3,7 @@ package com.example.rpg.ui.fragments;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,10 +30,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 
 public class TaskFragment extends Fragment {
@@ -165,7 +169,7 @@ public class TaskFragment extends Fragment {
 
     public void cancelCountdown(long taskId) {
         countdownActive.put(taskId, false);
-        countdownInitialized.remove(taskId); // so future auto-starts won’t re-trigger for changed tasks
+        countdownInitialized.remove(taskId);
     }
 
     public void showTaskDialog(@Nullable Task task) {
@@ -229,15 +233,21 @@ public class TaskFragment extends Fragment {
                     String unit = repeating ? spinnerUnit.getSelectedItem().toString() : null;
 
                     // NEW: execution date removed, it becomes set when task is DONE
-                    Date executionTime = null;
+                    Date date = new Date();
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(date);
 
-                    // NEW: auto repeating date calculation
+                    calendar.add(Calendar.DAY_OF_MONTH, 3);
+
+                    Date executionTime = calendar.getTime();
+
+                    Date completionTime = null;
                     Date repeatStart = null;
                     Date repeatEnd = null;
 
                     if (repeating) {
                         Calendar cal = Calendar.getInstance();
-                        repeatStart = cal.getTime();  // today
+                        repeatStart = cal.getTime();
 
                         if ("Day".equals(unit)) {
                             cal.add(Calendar.DAY_OF_YEAR, interval);
@@ -250,6 +260,7 @@ public class TaskFragment extends Fragment {
 
                     int difficultyXP = getDifficultyXPFromIndex(spinnerDifficulty.getSelectedItemPosition());
                     int importanceXP = getImportanceXPFromIndex(spinnerImportance.getSelectedItemPosition());
+                    int totalXP = 0;
                     Long playerOwnerId = (progress != null) ? progress.id : null;
                     Long stageId = (progress != null) ? (long) progress.level : null;
 
@@ -266,7 +277,9 @@ public class TaskFragment extends Fragment {
                             repeatEnd,
                             difficultyXP,
                             importanceXP,
-                            executionTime // null for now
+                            totalXP,
+                            executionTime,
+                            completionTime
                     );
 
                     newTask.status = (task == null) ? "active" : spinnerStatus.getSelectedItem().toString();

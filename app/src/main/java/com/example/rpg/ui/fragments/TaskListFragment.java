@@ -1,5 +1,6 @@
 package com.example.rpg.ui.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,11 +14,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpg.R;
+import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.daos.TaskDao;
+import com.example.rpg.database.managers.ProgressManager;
 import com.example.rpg.model.Category;
 import com.example.rpg.model.Task;
+import com.example.rpg.model.UserProgress;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class TaskListFragment extends Fragment {
 
@@ -26,6 +33,8 @@ public class TaskListFragment extends Fragment {
     private List<Category> allCategories = new ArrayList<>();
     private TaskAdapter adapter;
     private TextView emptyView;
+    private TaskDao taskDao;
+    private ProgressManager progressManager;
 
     public static TaskListFragment newInstance(List<Task> tasks, List<Category> categories, boolean showRepeating) {
         TaskListFragment fragment = new TaskListFragment();
@@ -52,7 +61,6 @@ public class TaskListFragment extends Fragment {
 
         return view;
     }
-
 
     public void updateTasks(List<Task> newTasks) {
         this.allTasks = newTasks != null ? newTasks : new ArrayList<>();
@@ -101,16 +109,46 @@ public class TaskListFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
             Task task = tasks.get(position);
+
             holder.textName.setText(task.name != null ? task.name : "Unnamed Task");
             holder.textCategory.setText(
                     task.categoryId != null ? "Category #" + task.categoryId : "No Category");
             holder.textStatus.setText("Status: " + (task.status != null ? task.status : "Unknown"));
 
-
             boolean clickable = "active".equals(task.status) || "paused".equals(task.status);
 
             holder.itemView.setEnabled(clickable);
             holder.itemView.setAlpha(clickable ? 1f : 0.4f);
+
+            holder.buttonDone.setOnClickListener(v -> {
+                if (!clickable) return;
+
+                holder.textStatus.setText("Status: done");
+                holder.itemView.setAlpha(0.4f);
+                holder.itemView.setEnabled(false);
+
+                Context ctx = holder.itemView.getContext();
+                AppDatabase db = AppDatabase.get(ctx);
+
+                Executors.newSingleThreadExecutor().execute(() -> {
+
+                    task.status = "done";
+                    task.completionTime = new Date();
+
+                    ProgressManager pm = new ProgressManager(db.taskDao());
+                    int awardedXp = pm.calculateAwardedXp(task, task.userId);
+
+                    task.totalXP = awardedXp;
+                    db.taskDao().update(task);
+
+                    UserProgress progress = db.userProgressDao().getById(task.userId);
+                    if (progress != null) {
+                        progress.xp += awardedXp;
+                        if (awardedXp > 0) progress.update(task);
+                        db.userProgressDao().update(progress);
+                    }
+                });
+            });
 
             if (clickable) {
                 holder.itemView.setOnClickListener(v -> {
@@ -125,9 +163,7 @@ public class TaskListFragment extends Fragment {
             } else {
                 holder.itemView.setOnClickListener(null);
             }
-
         }
-
 
         @Override
         public int getItemCount() {
@@ -136,12 +172,14 @@ public class TaskListFragment extends Fragment {
 
         static class TaskViewHolder extends RecyclerView.ViewHolder {
             TextView textName, textCategory, textStatus;
+            View buttonDone;
 
             TaskViewHolder(@NonNull View itemView) {
                 super(itemView);
                 textName = itemView.findViewById(R.id.text_task_name);
                 textCategory = itemView.findViewById(R.id.text_task_category);
                 textStatus = itemView.findViewById(R.id.text_task_status);
+                buttonDone = itemView.findViewById(R.id.button_done);
             }
         }
     }
