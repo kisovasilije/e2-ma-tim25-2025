@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+import yuku.ambilwarna.AmbilWarnaDialog;
+
 public class CategoryFragment extends Fragment {
 
     private AppDatabase db;
@@ -109,44 +111,58 @@ public class CategoryFragment extends Fragment {
             });
         });
     }
-
+    @Nullable
     private void showCategoryDialog(@Nullable Category category) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category, null);
         builder.setView(dialogView);
 
         EditText inputName = dialogView.findViewById(R.id.input_category_name);
-        Spinner spinnerColor = dialogView.findViewById(R.id.spinner_category_color);
+        View colorPreview = dialogView.findViewById(R.id.view_color_preview);
+        View btnPickColor = dialogView.findViewById(R.id.btn_pick_color);
 
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                new ArrayList<>(colorMap.keySet())
-        );
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerColor.setAdapter(spinnerAdapter);
+        final int[] selectedColor = new int[1];
+        selectedColor[0] = (category != null) ? category.color : Color.RED;
+
+        colorPreview.setBackgroundColor(selectedColor[0]);
+
+        btnPickColor.setOnClickListener(v -> {
+            AmbilWarnaDialog colorDialog = new AmbilWarnaDialog(
+                    requireContext(),
+                    selectedColor[0],
+                    new AmbilWarnaDialog.OnAmbilWarnaListener() {
+                        @Override
+                        public void onOk(AmbilWarnaDialog dialog, int color) {
+                            selectedColor[0] = color;
+                            colorPreview.setBackgroundColor(color);
+                        }
+
+                        @Override
+                        public void onCancel(AmbilWarnaDialog dialog) {}
+                    }
+            );
+            colorDialog.show();
+        });
 
         if (category != null) {
             inputName.setText(category.name);
-            String colorName = getColorName(category.color);
-            int position = spinnerAdapter.getPosition(colorName);
-            spinnerColor.setSelection(position);
         }
 
         builder.setTitle(category == null ? "Add Category" : "Edit Category");
         builder.setPositiveButton("Save", (dialog, which) -> {
             String name = inputName.getText().toString().trim();
-            String colorName = spinnerColor.getSelectedItem().toString();
-            int colorInt = colorMap.get(colorName);
 
             if (name.isEmpty()) {
                 Snackbar.make(listView, "Name cannot be empty", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
+            int chosenColor = selectedColor[0];
+
             Executors.newSingleThreadExecutor().execute(() -> {
-                // Check for unique color
-                Category existing = categoryDao.getByColor(colorInt);
+
+                Category existing = categoryDao.getByColor(chosenColor);
                 if (existing != null && (category == null || existing.id != category.id)) {
                     requireActivity().runOnUiThread(() ->
                             Snackbar.make(listView, "Color already in use", Snackbar.LENGTH_SHORT).show()
@@ -155,19 +171,21 @@ public class CategoryFragment extends Fragment {
                 }
 
                 if (category == null) {
-                    categoryDao.insert(new Category(name, colorInt));
+                    categoryDao.insert(new Category(name, chosenColor));
                 } else {
                     category.name = name;
-                    category.color = colorInt;
+                    category.color = chosenColor;
                     categoryDao.update(category);
                 }
 
                 loadCategories();
             });
         });
+
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
+
 
     private void deleteCategory(Category category) {
         Executors.newSingleThreadExecutor().execute(() -> {
