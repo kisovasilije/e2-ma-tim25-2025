@@ -54,7 +54,6 @@ public class TaskFragment extends Fragment {
     private UserProgress progress;
 
     private final java.util.Map<Long, Boolean> countdownActive = new java.util.HashMap<>();
-    // NEW: track which tasks already have a countdown started (per fragment lifetime)
     private final java.util.Set<Long> countdownInitialized = new java.util.HashSet<>();
 
     @Override
@@ -94,7 +93,6 @@ public class TaskFragment extends Fragment {
             List<Task> allTasks = taskDao.getCurrentAndFutureTasks(new Date());
             List<Category> allCategories = categoryDao.getAll();
 
-            // NEW: for any tasks that are already ACTIVE when loaded from DB, start countdown once
             for (Task t : allTasks) {
                 if ("active".equalsIgnoreCase(t.status) && !countdownInitialized.contains(t.id)) {
                     countdownInitialized.add(t.id);
@@ -138,10 +136,8 @@ public class TaskFragment extends Fragment {
 
     public void startUnfinishedCountdown(long taskId) {
 
-        // Cancel previous countdown
         countdownActive.put(taskId, false);
 
-        // Mark new countdown active
         countdownActive.put(taskId, true);
 
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -232,7 +228,6 @@ public class TaskFragment extends Fragment {
                             ? Integer.parseInt(inputInterval.getText().toString()) : 0;
                     String unit = repeating ? spinnerUnit.getSelectedItem().toString() : null;
 
-                    // NEW: execution date removed, it becomes set when task is DONE
                     Date date = new Date();
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(date);

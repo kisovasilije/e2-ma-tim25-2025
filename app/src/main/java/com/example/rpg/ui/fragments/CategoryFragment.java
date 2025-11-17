@@ -36,22 +36,10 @@ public class CategoryFragment extends Fragment {
 
     private AppDatabase db;
     private CategoryDao categoryDao;
-
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private List<Category> categories = new ArrayList<>();
     private FloatingActionButton fabAdd;
-
-    private Map<String, Integer> colorMap = new HashMap<>();
-
-    public CategoryFragment() {
-        colorMap.put("Red", Color.RED);
-        colorMap.put("Green", Color.GREEN);
-        colorMap.put("Blue", Color.BLUE);
-        colorMap.put("Yellow", Color.YELLOW);
-        colorMap.put("Cyan", Color.CYAN);
-        colorMap.put("Magenta", Color.MAGENTA);
-    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -59,7 +47,6 @@ public class CategoryFragment extends Fragment {
         db = AppDatabase.get(context.getApplicationContext());
         categoryDao = db.categoryDao();
     }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -83,7 +70,6 @@ public class CategoryFragment extends Fragment {
 
         return view;
     }
-
     private void loadCategories() {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Category> list = categoryDao.getAll();
@@ -185,8 +171,6 @@ public class CategoryFragment extends Fragment {
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
-
-
     private void deleteCategory(Category category) {
         Executors.newSingleThreadExecutor().execute(() -> {
             categoryDao.delete(category);
@@ -212,13 +196,5 @@ public class CategoryFragment extends Fragment {
                 Toast.makeText(requireContext(), "Category deleted", Toast.LENGTH_SHORT).show();
             });
         });
-    }
-
-
-    private String getColorName(int colorInt) {
-        for (Map.Entry<String, Integer> entry : colorMap.entrySet()) {
-            if (entry.getValue() == colorInt) return entry.getKey();
-        }
-        return "Unknown";
     }
 }

@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
-import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.managers.ProgressManager;
 import com.example.rpg.model.Category;
 import com.example.rpg.model.Task;
@@ -25,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class TaskListFragment extends Fragment {
 
@@ -33,9 +33,6 @@ public class TaskListFragment extends Fragment {
     private List<Category> allCategories = new ArrayList<>();
     private TaskAdapter adapter;
     private TextView emptyView;
-    private TaskDao taskDao;
-    private ProgressManager progressManager;
-
     public static TaskListFragment newInstance(List<Task> tasks, List<Category> categories, boolean showRepeating) {
         TaskListFragment fragment = new TaskListFragment();
         fragment.showRepeating = showRepeating;
@@ -43,7 +40,6 @@ public class TaskListFragment extends Fragment {
         fragment.allCategories = categories != null ? categories : new ArrayList<>();
         return fragment;
     }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -61,7 +57,6 @@ public class TaskListFragment extends Fragment {
 
         return view;
     }
-
     public void updateTasks(List<Task> newTasks) {
         this.allTasks = newTasks != null ? newTasks : new ArrayList<>();
 
@@ -76,28 +71,26 @@ public class TaskListFragment extends Fragment {
             emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         }
     }
-
     @Override
     public void onResume() {
         super.onResume();
         updateTasks(allTasks);
     }
-
-
     private static class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
-
         private List<Task> tasks = new ArrayList<>();
         private final Fragment parentFragment;
-
         TaskAdapter(Fragment parent) {
             this.parentFragment = parent;
         }
-
         public void setTasks(List<Task> newTasks) {
-            this.tasks = newTasks != null ? newTasks : new ArrayList<>();
+            this.tasks = (newTasks == null)
+                    ? new ArrayList<>()
+                    : newTasks.stream()
+                    .sorted((a, b) -> Long.compare(b.id, a.id))
+                    .collect(Collectors.toList());
+
             notifyDataSetChanged();
         }
-
         @NonNull
         @Override
         public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -105,7 +98,6 @@ public class TaskListFragment extends Fragment {
                     .inflate(R.layout.task_item, parent, false);
             return new TaskViewHolder(view);
         }
-
         @Override
         public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
             Task task = tasks.get(position);
@@ -164,12 +156,10 @@ public class TaskListFragment extends Fragment {
                 holder.itemView.setOnClickListener(null);
             }
         }
-
         @Override
         public int getItemCount() {
             return tasks.size();
         }
-
         static class TaskViewHolder extends RecyclerView.ViewHolder {
             TextView textName, textCategory, textStatus;
             View buttonDone;
