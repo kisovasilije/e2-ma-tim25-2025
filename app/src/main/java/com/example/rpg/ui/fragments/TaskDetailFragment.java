@@ -296,6 +296,18 @@ public class TaskDetailFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
             taskDao.update(task);
 
+            var progress = db.userProgressDao().getById(user.id);
+            if (progress == null) {
+                return;
+            }
+
+            progress.update(task);
+            int rowsAffected = db.userProgressDao().update(progress);
+            if (rowsAffected < 1) {
+                return;
+            }
+
+            Log.d("[RPG]", "Task passed. Progress updated.");
             if (isAdded() && getActivity() != null) {
                 requireActivity().runOnUiThread(() -> {
 
