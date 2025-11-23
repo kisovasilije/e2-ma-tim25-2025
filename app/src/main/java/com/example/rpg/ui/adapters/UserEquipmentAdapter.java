@@ -1,3 +1,4 @@
+/*
 package com.example.rpg.ui.adapters;
 
 import android.content.Context;
@@ -65,3 +66,4 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         return v;
     }
 }
+*/

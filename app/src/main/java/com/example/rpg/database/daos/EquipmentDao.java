@@ -1,3 +1,4 @@
+/*
 package com.example.rpg.database.daos;
 
 import androidx.room.Dao;
@@ -15,3 +16,4 @@ public interface EquipmentDao {
     @Query("select * from equipments where id = :id")
     Equipment getById(long id);
 }
+*/

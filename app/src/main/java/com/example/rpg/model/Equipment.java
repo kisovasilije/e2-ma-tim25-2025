@@ -1,3 +1,4 @@
+/*
 package com.example.rpg.model;
 
 import androidx.annotation.Nullable;
@@ -23,12 +24,21 @@ public class Equipment {
 
     public int armorType;
 
-    public int ppBonus;
+    */
+/**
+     * Power point percentage. Power points increasement percentage-wise.
+     *//*
 
-    public Equipment(String name, int type, int armorType, int ppBonus) {
+    public double ppPct;
+
+    public double price;
+
+    public Equipment(String name, int type, int armorType, double ppPct, double price) {
         this.name = name;
         this.type = type;
         this.armorType = armorType;
-        this.ppBonus = ppBonus;
+        this.ppPct = ppPct;
+        this.price = price;
     }
 }
+*/

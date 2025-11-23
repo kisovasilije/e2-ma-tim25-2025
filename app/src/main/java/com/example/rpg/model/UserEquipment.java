@@ -1,3 +1,4 @@
+/*
 package com.example.rpg.model;
 
 import androidx.room.Entity;
@@ -39,3 +40,4 @@ public class UserEquipment {
         this.isActivated = isActivated;
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package com.example.rpg.ui.fragments;
 
 import android.content.Context;
@@ -26,10 +27,12 @@ import com.example.rpg.ui.adapters.UserEquipmentAdapter;
 import java.util.List;
 import java.util.Locale;
 
+*/
 /**
  * A simple {@link Fragment} subclass.
  * create an instance of this fragment.
- */
+ *//*
+
 public class EquipmentFragment extends Fragment {
     private FragmentEquipmentBinding binding;
 
@@ -105,7 +108,7 @@ public class EquipmentFragment extends Fragment {
             var equipment = db.equipmentDao().getById(e.equipmentId);
 
             requireActivity().runOnUiThread(() -> {
-                binding.boostedPpText.setText(String.format("%d", progress.pp + equipment.ppBonus));
+                binding.boostedPpText.setText(String.format("%d", progress.pp + equipment.ppPct));
                 Toast.makeText(
                         requireContext(),
                         String.format(Locale.US, "Activated."),
@@ -114,4 +117,4 @@ public class EquipmentFragment extends Fragment {
             });
         }).start();
     }
-}
+}*/
