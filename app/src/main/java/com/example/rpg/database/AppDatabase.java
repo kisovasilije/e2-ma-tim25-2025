@@ -21,6 +21,9 @@ import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
 //import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
+import com.example.rpg.model.equipment.Armor;
+import com.example.rpg.model.equipment.Potion;
+import com.example.rpg.model.equipment.Weapon;
 
 @Database(
         entities = {
@@ -28,9 +31,12 @@ import com.example.rpg.model.UserProgress;
                 Task.class,
                 UserProgress.class,
                 Boss.class,
-                Category.class
+                Category.class,
+                Potion.class,
+                Armor.class,
+                Weapon.class
         },
-        version = 9
+        version = 11
 )
 @TypeConverters({Task.DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
