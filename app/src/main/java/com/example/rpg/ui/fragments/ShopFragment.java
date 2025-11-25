@@ -19,6 +19,7 @@ import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.repository.EquipmentRepository;
 import com.example.rpg.databinding.FragmentShopBinding;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.equipment.Equipment;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.adapters.EquipmentAdapter;
@@ -85,17 +86,16 @@ public class ShopFragment extends Fragment {
 
     private void onAction(Equipment e, int pos, View row) {
         new Thread(() -> {
-            Log.d("SHOP FRAGMENT", "to be implemented");
-//            var userEq = new UserEquipment(user.id, e.id, false);
-//            db.userEquipmentDao().insert(userEq);
-//
-//            requireActivity().runOnUiThread(() -> {
-//                Toast.makeText(
-//                        requireContext(),
-//                        String.format(Locale.US, "Purchased."),
-//                        Toast.LENGTH_SHORT
-//                ).show();
-//            });
+            var userEq = new UserEquipment(user.id, e.getId(), false);
+            db.userEquipmentDao().insert(userEq);
+
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(
+                        requireContext(),
+                        String.format(Locale.US, "Purchased."),
+                        Toast.LENGTH_SHORT
+                ).show();
+            });
         }).start();
     }
 }

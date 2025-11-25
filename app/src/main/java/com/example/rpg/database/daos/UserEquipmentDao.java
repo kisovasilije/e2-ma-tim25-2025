@@ -1,4 +1,3 @@
-/*
 package com.example.rpg.database.daos;
 
 import androidx.room.Dao;
@@ -24,4 +23,3 @@ public interface UserEquipmentDao {
     @Query("update user_equipments set isActivated=0 where userId = :userId")
     void deactivateByUserId(long userId);
 }
-*/
