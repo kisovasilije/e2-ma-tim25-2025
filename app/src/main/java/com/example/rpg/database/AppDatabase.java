@@ -7,13 +7,16 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
+import com.example.rpg.database.daos.ArmorDao;
 import com.example.rpg.database.daos.BossDao;
 import com.example.rpg.database.daos.CategoryDao;
 //import com.example.rpg.database.daos.EquipmentDao;
+import com.example.rpg.database.daos.PotionDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.daos.UserDao;
 //import com.example.rpg.database.daos.UserEquipmentDao;
 import com.example.rpg.database.daos.UserProgressDao;
+import com.example.rpg.database.daos.WeaponDao;
 import com.example.rpg.model.Boss;
 import com.example.rpg.model.Category;
 //import com.example.rpg.model.Equipment;
@@ -50,11 +53,13 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract UserProgressDao userProgressDao();
 
-//    public abstract EquipmentDao equipmentDao();
-
-//    public abstract UserEquipmentDao userEquipmentDao();
-
     public abstract CategoryDao categoryDao();
+
+    public abstract PotionDao potionDao();
+
+    public abstract ArmorDao armorDao();
+
+    public abstract WeaponDao weaponDao();
 
     public abstract BossDao bossDao();
 
