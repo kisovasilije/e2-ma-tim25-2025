@@ -25,4 +25,15 @@ public class EquipmentRepository {
 
         return equipments;
     }
+
+    public List<Equipment> getBuyable() {
+        var potions = db.potionDao().getAll();
+        var armors = db.armorDao().getAll();
+
+        List<Equipment> equipments = new ArrayList<>();
+        equipments.addAll(potions);
+        equipments.addAll(armors);
+
+        return equipments;
+    }
 }

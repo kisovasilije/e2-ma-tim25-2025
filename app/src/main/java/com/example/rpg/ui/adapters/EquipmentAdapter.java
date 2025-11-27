@@ -47,10 +47,12 @@ public class EquipmentAdapter extends ArrayAdapter<Equipment> {
 
         TextView name = convertView.findViewById(R.id.equipment_name_text);
         TextView type = convertView.findViewById(R.id.equipment_type_text);
+        TextView price = convertView.findViewById(R.id.equipment_price_text);
         Button btn = convertView.findViewById(R.id.buy_equipment_button);
 
         name.setText(String.format("%s", e.getName()));
         type.setText(String.format("%s", e.getType()));
+        price.setText(String.format("%s coins", e.calculatedPrice));
 
         final View row = convertView;
         btn.setOnClickListener(view -> onAction.onClick(e, position, row));

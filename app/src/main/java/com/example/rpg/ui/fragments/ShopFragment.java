@@ -20,10 +20,12 @@ import com.example.rpg.database.repository.EquipmentRepository;
 import com.example.rpg.databinding.FragmentShopBinding;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserEquipment;
+import com.example.rpg.model.UserProgress;
 import com.example.rpg.model.equipment.Equipment;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.adapters.EquipmentAdapter;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -38,6 +40,8 @@ public class ShopFragment extends Fragment {
     private EquipmentAdapter adapter;
 
     private User user;
+
+    private UserProgress progress;
 
     private EquipmentRepository equipmentRepository;
 
@@ -73,7 +77,14 @@ public class ShopFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
-            var equipments = equipmentRepository.getAll();
+            if (user == null) {
+                Log.e("Shop fragment", "User not authenticated.");
+                return;
+            }
+
+            progress = db.userProgressDao().getById(user.id);
+            var equipments = equipmentRepository.getBuyable();
+            calculateActualPrice(equipments);
 
             requireActivity().runOnUiThread(() -> {
                 ListView lw = binding.equipments;
@@ -97,5 +108,20 @@ public class ShopFragment extends Fragment {
                 ).show();
             });
         }).start();
+    }
+
+    private void calculateActualPrice(List<Equipment> equipments) {
+        for (var e : equipments) {
+            if (e.getPrice() == null) {
+                continue;
+            }
+
+            var rewardCoins = db.bossDao().getPreviousLevelRewardCoins(progress.level - 1);
+            rewardCoins = rewardCoins == null
+                    ? 100
+                    : rewardCoins;
+
+            e.calculatedPrice = rewardCoins * e.getPrice() / 100;
+        }
     }
 }

@@ -25,4 +25,7 @@ public interface BossDao {
 
     @Query("SELECT * FROM bosses ORDER BY id ASC")
     List<Boss> getAllBosses();
+
+    @Query("SELECT rewardCoins FROM bosses where level = :level LIMIT 1")
+    Integer getPreviousLevelRewardCoins(int level);
 }

@@ -2,6 +2,7 @@ package com.example.rpg.model.equipment;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 /**
@@ -28,6 +29,12 @@ public abstract class Equipment {
      */
     @Nullable
     private Integer price;
+
+    /**
+     * Actual amount of coins to buy this equipment
+     */
+    @Ignore
+    public Integer calculatedPrice;
 
     @NonNull
     public String getId() { return id; }
