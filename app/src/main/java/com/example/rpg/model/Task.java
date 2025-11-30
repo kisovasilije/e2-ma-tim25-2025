@@ -36,54 +36,42 @@ public class Task {
 
     @PrimaryKey(autoGenerate = true)
     public long id;
-
     @ColumnInfo
     public String name;
-
     @ColumnInfo
     public String description;
-
     @ColumnInfo(name = "category_id")
     public Long categoryId;
 
     public long userId;
-
     @ColumnInfo(name = "stageId", index = true)
     public Long stageId;
-
     @ColumnInfo(name = "is_repeating")
     public boolean isRepeating;
-
     @ColumnInfo(name = "repeat_interval")
     public int repeatInterval;
-
     @ColumnInfo(name = "repeat_unit")
     public String repeatUnit;
-
     @ColumnInfo(name = "repeat_start")
     public Date repeatStart;
-
     @ColumnInfo(name = "repeat_end")
     public Date repeatEnd;
-
     @ColumnInfo(name = "difficulty_xp")
     public int difficultyXP;
-
     @ColumnInfo(name = "importance_xp")
     public int importanceXP;
-
     @ColumnInfo(name = "total_xp")
     public int totalXP;
-
     @ColumnInfo(name = "execution_time")
     public Date executionTime;
-
+    @ColumnInfo(name = "completion_time")
+    public Date completionTime;
     @ColumnInfo(name = "status")
-    public String status; // "active", "done", "canceled", "paused", "unfinished"
+    public String status;
 
     public Task(String name, String description, Long categoryId, long userId, Long stageId,
                 boolean isRepeating, int repeatInterval, String repeatUnit, Date repeatStart, Date repeatEnd,
-                int difficultyXP, int importanceXP, Date executionTime) {
+                int difficultyXP, int importanceXP, int totalXP, Date executionTime, Date completionTime) {
         this.name = name;
         this.description = description;
         this.categoryId = categoryId;
@@ -96,8 +84,9 @@ public class Task {
         this.repeatEnd = repeatEnd;
         this.difficultyXP = difficultyXP;
         this.importanceXP = importanceXP;
-        this.totalXP = difficultyXP + importanceXP;
+        this.totalXP = totalXP;
         this.executionTime = executionTime;
+        this.completionTime = completionTime;
         this.status = "active";
     }
 
@@ -111,17 +100,5 @@ public class Task {
         public static Date toDate(Long timestamp) {
             return timestamp == null ? null : new Date(timestamp);
         }
-    }
-
-    public int getTotalXpForLevel(int level) {
-        int importanceXp = importanceXP;
-        int difficultyXp = difficultyXP;
-
-        for (int i = 1; i < level; i++) {
-            importanceXp = (int) Math.ceil(importanceXp * 3.0 / 2.0);
-            difficultyXp = (int) Math.ceil(difficultyXp * 3.0 / 2.0);
-        }
-
-        return importanceXp + difficultyXp;
     }
 }

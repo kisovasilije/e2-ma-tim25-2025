@@ -30,26 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+import yuku.ambilwarna.AmbilWarnaDialog;
+
 public class CategoryFragment extends Fragment {
 
     private AppDatabase db;
     private CategoryDao categoryDao;
-
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private List<Category> categories = new ArrayList<>();
     private FloatingActionButton fabAdd;
-
-    private Map<String, Integer> colorMap = new HashMap<>();
-
-    public CategoryFragment() {
-        colorMap.put("Red", Color.RED);
-        colorMap.put("Green", Color.GREEN);
-        colorMap.put("Blue", Color.BLUE);
-        colorMap.put("Yellow", Color.YELLOW);
-        colorMap.put("Cyan", Color.CYAN);
-        colorMap.put("Magenta", Color.MAGENTA);
-    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -57,7 +47,6 @@ public class CategoryFragment extends Fragment {
         db = AppDatabase.get(context.getApplicationContext());
         categoryDao = db.categoryDao();
     }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -81,7 +70,6 @@ public class CategoryFragment extends Fragment {
 
         return view;
     }
-
     private void loadCategories() {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Category> list = categoryDao.getAll();
@@ -109,44 +97,58 @@ public class CategoryFragment extends Fragment {
             });
         });
     }
-
+    @Nullable
     private void showCategoryDialog(@Nullable Category category) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category, null);
         builder.setView(dialogView);
 
         EditText inputName = dialogView.findViewById(R.id.input_category_name);
-        Spinner spinnerColor = dialogView.findViewById(R.id.spinner_category_color);
+        View colorPreview = dialogView.findViewById(R.id.view_color_preview);
+        View btnPickColor = dialogView.findViewById(R.id.btn_pick_color);
 
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                new ArrayList<>(colorMap.keySet())
-        );
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerColor.setAdapter(spinnerAdapter);
+        final int[] selectedColor = new int[1];
+        selectedColor[0] = (category != null) ? category.color : Color.RED;
+
+        colorPreview.setBackgroundColor(selectedColor[0]);
+
+        btnPickColor.setOnClickListener(v -> {
+            AmbilWarnaDialog colorDialog = new AmbilWarnaDialog(
+                    requireContext(),
+                    selectedColor[0],
+                    new AmbilWarnaDialog.OnAmbilWarnaListener() {
+                        @Override
+                        public void onOk(AmbilWarnaDialog dialog, int color) {
+                            selectedColor[0] = color;
+                            colorPreview.setBackgroundColor(color);
+                        }
+
+                        @Override
+                        public void onCancel(AmbilWarnaDialog dialog) {}
+                    }
+            );
+            colorDialog.show();
+        });
 
         if (category != null) {
             inputName.setText(category.name);
-            String colorName = getColorName(category.color);
-            int position = spinnerAdapter.getPosition(colorName);
-            spinnerColor.setSelection(position);
         }
 
         builder.setTitle(category == null ? "Add Category" : "Edit Category");
         builder.setPositiveButton("Save", (dialog, which) -> {
             String name = inputName.getText().toString().trim();
-            String colorName = spinnerColor.getSelectedItem().toString();
-            int colorInt = colorMap.get(colorName);
 
             if (name.isEmpty()) {
                 Snackbar.make(listView, "Name cannot be empty", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
+            int chosenColor = selectedColor[0];
+
             Executors.newSingleThreadExecutor().execute(() -> {
-                // Check for unique color
-                Category existing = categoryDao.getByColor(colorInt);
+
+                Category existing = categoryDao.getByColor(chosenColor);
                 if (existing != null && (category == null || existing.id != category.id)) {
                     requireActivity().runOnUiThread(() ->
                             Snackbar.make(listView, "Color already in use", Snackbar.LENGTH_SHORT).show()
@@ -155,20 +157,20 @@ public class CategoryFragment extends Fragment {
                 }
 
                 if (category == null) {
-                    categoryDao.insert(new Category(name, colorInt));
+                    categoryDao.insert(new Category(name, chosenColor));
                 } else {
                     category.name = name;
-                    category.color = colorInt;
+                    category.color = chosenColor;
                     categoryDao.update(category);
                 }
 
                 loadCategories();
             });
         });
+
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
-
     private void deleteCategory(Category category) {
         Executors.newSingleThreadExecutor().execute(() -> {
             categoryDao.delete(category);
@@ -194,13 +196,5 @@ public class CategoryFragment extends Fragment {
                 Toast.makeText(requireContext(), "Category deleted", Toast.LENGTH_SHORT).show();
             });
         });
-    }
-
-
-    private String getColorName(int colorInt) {
-        for (Map.Entry<String, Integer> entry : colorMap.entrySet()) {
-            if (entry.getValue() == colorInt) return entry.getKey();
-        }
-        return "Unknown";
     }
 }
