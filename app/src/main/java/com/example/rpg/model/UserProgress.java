@@ -55,17 +55,23 @@ public class UserProgress {
         return new UserProgress(id, INIT_XP, INIT_LEVEL, INIT_PP, LEVEL_1_TITLE);
     }
 
+    /**
+     * Updates user progress and returns information whether level is passed or not
+     * @param task
+     * @return is level passed
+     */
     @SuppressLint("DefaultLocale")
-    public void update(Task task) {
+    public boolean update(Task task) {
         xp += task.getTotalXpForLevel(level);
         if (!isLevelPassed()) {
-            return;
+            return false;
         }
 
         upgradePp();
 
         level++;
         upgradeTitle();
+        return true;
     }
 
     public double getSuccessRate(TaskDao taskDao, long stageId) {

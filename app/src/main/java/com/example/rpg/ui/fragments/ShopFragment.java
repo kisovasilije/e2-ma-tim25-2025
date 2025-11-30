@@ -117,9 +117,9 @@ public class ShopFragment extends Fragment {
             }
 
             var rewardCoins = db.bossDao().getPreviousLevelRewardCoins(progress.level - 1);
-            rewardCoins = rewardCoins == null
-                    ? 100
-                    : rewardCoins;
+            if (rewardCoins == null) {
+                rewardCoins = 100;
+            }
 
             e.calculatedPrice = rewardCoins * e.getPrice() / 100;
         }
