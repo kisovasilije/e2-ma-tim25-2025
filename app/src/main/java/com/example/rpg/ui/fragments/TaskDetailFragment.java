@@ -344,7 +344,7 @@ public class TaskDetailFragment extends Fragment {
      * @return {@link EquipmentActivationDialog}
      */
     private EquipmentActivationDialog generateConfiguration() {
-        var dialog = new EquipmentActivationDialog(requireContext());
+        var dialog = new EquipmentActivationDialog(requireContext(), user, requireActivity());
 
         // Cannot cancel pre-fight dialog
         dialog.setCancelable(false);

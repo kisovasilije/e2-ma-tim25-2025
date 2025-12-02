@@ -14,16 +14,7 @@ public class EquipmentRepository {
     }
 
     public List<Equipment> getAll() {
-        var potions = db.potionDao().getAll();
-        var armors = db.armorDao().getAll();
-        var weapons = db.weaponDao().getAll();
-
-        List<Equipment> equipments = new ArrayList<>();
-        equipments.addAll(potions);
-        equipments.addAll(armors);
-        equipments.addAll(weapons);
-
-        return equipments;
+        return gatherEquipment();
     }
 
     public List<Equipment> getBuyable() {
@@ -33,6 +24,28 @@ public class EquipmentRepository {
         List<Equipment> equipments = new ArrayList<>();
         equipments.addAll(potions);
         equipments.addAll(armors);
+
+        return equipments;
+    }
+
+    public Equipment getById(String id) {
+        var equipments = gatherEquipment();
+
+        return equipments.stream()
+                .filter(equipment -> equipment.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<Equipment> gatherEquipment() {
+        var potions = db.potionDao().getAll();
+        var armors = db.armorDao().getAll();
+        var weapons = db.weaponDao().getAll();
+
+        List<Equipment> equipments = new ArrayList<>();
+        equipments.addAll(potions);
+        equipments.addAll(armors);
+        equipments.addAll(weapons);
 
         return equipments;
     }

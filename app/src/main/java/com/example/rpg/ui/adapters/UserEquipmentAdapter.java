@@ -1,4 +1,3 @@
-/*
 package com.example.rpg.ui.adapters;
 
 import android.content.Context;
@@ -13,9 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.rpg.R;
-import com.example.rpg.model.Equipment;
+import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.UserEquipment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
@@ -25,6 +25,8 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
 
     private final UeOnAction onAction;
 
+    private final List<UserEquipment> data = new ArrayList<>();
+
     public UserEquipmentAdapter(
             @NonNull Context context,
             @NonNull List<UserEquipment> data,
@@ -33,6 +35,7 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         super(context, 0, data);
 
         this.onAction = onAction;
+        this.data.addAll(data);
     }
 
     @NonNull
@@ -53,7 +56,7 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         userId.setText(String.format("User ID: %s", e.userId));
         equipmentId.setText(String.format("Eq ID: %s", e.equipmentId));
 
-        if (e.isActivated) {
+        if (e.status == ActivityStatus.USED) {
             btn.setEnabled(false);
             btn.setText("Activated");
         }
@@ -65,5 +68,10 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
 
         return v;
     }
+
+    public void updateData(List<UserEquipment> ues) {
+        data.clear();
+        data.addAll(ues);
+        notifyDataSetChanged();
+    }
 }
-*/

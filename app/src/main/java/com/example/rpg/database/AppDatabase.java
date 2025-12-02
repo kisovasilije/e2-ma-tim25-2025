@@ -38,7 +38,7 @@ import com.example.rpg.model.equipment.Weapon;
                 Weapon.class,
                 UserEquipment.class
         },
-        version = 12
+        version = 13
 )
 @TypeConverters({Task.DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {

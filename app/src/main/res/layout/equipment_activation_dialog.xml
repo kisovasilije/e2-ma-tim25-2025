@@ -1,6 +1,7 @@
 <LinearLayout
-    android:layout_height="600dp"
+    android:padding="16dp"
     android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -11,10 +12,32 @@
         android:textSize="20sp"
         android:text="Activate equipment" />
 
-    <ListView
+    <RadioGroup
+        android:id="@+id/equipment_radio_group"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:padding="10sp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/activate_equipment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10sp"
+            android:text="Activate" />
+
+        <RadioButton
+            android:id="@+id/activated_equipment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Activated" />
+
+    </RadioGroup>
+
+    <ListView
+        android:id="@+id/equipments"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"/>
 
     <Button
         android:layout_width="match_parent"

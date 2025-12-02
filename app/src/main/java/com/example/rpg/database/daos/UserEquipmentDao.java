@@ -19,7 +19,4 @@ public interface UserEquipmentDao {
 
     @Update
     int update(UserEquipment equipment);
-
-    @Query("update user_equipments set isActivated=0 where userId = :userId")
-    void deactivateByUserId(long userId);
 }

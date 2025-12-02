@@ -14,10 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.repository.EquipmentRepository;
 import com.example.rpg.databinding.FragmentShopBinding;
+import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
@@ -97,7 +97,7 @@ public class ShopFragment extends Fragment {
 
     private void onAction(Equipment e, int pos, View row) {
         new Thread(() -> {
-            var userEq = new UserEquipment(user.id, e.getId(), false);
+            var userEq = new UserEquipment(user.id, e.getId(), ActivityStatus.PURCHASED);
             db.userEquipmentDao().insert(userEq);
 
             requireActivity().runOnUiThread(() -> {
