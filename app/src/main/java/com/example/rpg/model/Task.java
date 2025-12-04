@@ -101,4 +101,16 @@ public class Task {
             return timestamp == null ? null : new Date(timestamp);
         }
     }
+
+    public int getTotalXpForLevel(int level) {
+        int importanceXp = importanceXP;
+        int difficultyXp = difficultyXP;
+
+        for (int i = 1; i < level; i++) {
+            importanceXp = (int) Math.ceil(importanceXp * 3.0 / 2.0);
+            difficultyXp = (int) Math.ceil(difficultyXp * 3.0 / 2.0);
+        }
+
+        return importanceXp + difficultyXp;
+    }
 }

@@ -12,9 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.rpg.R;
-import com.example.rpg.model.Equipment;
+import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.UserEquipment;
 
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
@@ -24,6 +27,8 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
 
     private final UeOnAction onAction;
 
+    private final List<UserEquipment> data = new ArrayList<>();
+
     public UserEquipmentAdapter(
             @NonNull Context context,
             @NonNull List<UserEquipment> data,
@@ -32,6 +37,7 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         super(context, 0, data);
 
         this.onAction = onAction;
+        this.data.addAll(data);
     }
 
     @NonNull
@@ -45,16 +51,17 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         UserEquipment e = getItem(position);
         if (e == null) return v;
 
-        TextView userId = v.findViewById(R.id.user_id_text);
-        TextView equipmentId = v.findViewById(R.id.equipment_id_text);
+        TextView equipmentName = v.findViewById(R.id.equipment_name_text);
+        TextView equipmentType = v.findViewById(R.id.equipment_type_text);
+        TextView equipmentDescription = v.findViewById(R.id.equipment_description_text);
         Button btn = v.findViewById(R.id.activate_equipment_button);
 
-        userId.setText(String.format("User ID: %s", e.userId));
-        equipmentId.setText(String.format("Eq ID: %s", e.equipmentId));
+        equipmentName.setText(String.format("%s", e.equipment.getName()));
+        equipmentType.setText(String.format("%s", e.equipment.getType().toString()));
+        equipmentDescription.setText(e.equipment.getDescription());
 
-        if (e.isActivated) {
-            btn.setEnabled(false);
-            btn.setText("Activated");
+        if (e.status != ActivityStatus.PURCHASED) {
+            btn.setVisibility(View.GONE);
         }
         else {
             final View row = v;
@@ -63,5 +70,11 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         }
 
         return v;
+    }
+
+    public void updateData(List<UserEquipment> ues) {
+        data.clear();
+        data.addAll(ues);
+        notifyDataSetChanged();
     }
 }

@@ -12,21 +12,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.rpg.R;
-import com.example.rpg.model.Equipment;
+import com.example.rpg.model.equipment.Equipment;
 
 import java.util.List;
 
 public class EquipmentAdapter extends ArrayAdapter<Equipment> {
-    public interface EquipmentOnAction {
-        void onClick(Equipment e, int post, View row);
+    public interface OnAction {
+        void onClick(Equipment e, int pos, View row);
     }
 
-    private final EquipmentOnAction onAction;
+    private final EquipmentAdapter.OnAction onAction;
 
     public EquipmentAdapter(
             @NonNull Context context,
             @NonNull List<Equipment> data,
-            @NonNull EquipmentOnAction onAction
+            @NonNull EquipmentAdapter.OnAction onAction
     ) {
         super(context, 0, data);
 
@@ -36,24 +36,27 @@ public class EquipmentAdapter extends ArrayAdapter<Equipment> {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        View v = convertView;
-        if (v == null) {
-            v = LayoutInflater.from(getContext()).inflate(R.layout.equipment_row, parent, false);
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.equipment_row, parent, false);
         }
 
         Equipment e = getItem(position);
-        if (e == null) return v;
+        if (e == null) {
+            return convertView;
+        }
 
-        TextView name = v.findViewById(R.id.equipment_name_text);
-        TextView type = v.findViewById(R.id.equipment_type_text);
-        Button btn = v.findViewById(R.id.buy_equipment_button);
+        TextView name = convertView.findViewById(R.id.equipment_name_text);
+        TextView type = convertView.findViewById(R.id.equipment_type_text);
+        TextView price = convertView.findViewById(R.id.equipment_price_text);
+        Button btn = convertView.findViewById(R.id.buy_equipment_button);
 
-        name.setText(String.format("Name: %s", e.name));
-        type.setText(String.format("Type: %s", e.type));
+        name.setText(String.format("%s", e.getName()));
+        type.setText(String.format("%s", e.getType()));
+        price.setText(String.format("%s coins", e.calculatedPrice));
 
-        final View row = v;
+        final View row = convertView;
         btn.setOnClickListener(view -> onAction.onClick(e, position, row));
 
-        return v;
+        return convertView;
     }
 }

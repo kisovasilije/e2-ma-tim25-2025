@@ -7,21 +7,25 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.repository.EquipmentRepository;
 import com.example.rpg.databinding.FragmentShopBinding;
-import com.example.rpg.model.Equipment;
+import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserEquipment;
+import com.example.rpg.model.UserProgress;
+import com.example.rpg.model.equipment.Equipment;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.adapters.EquipmentAdapter;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -37,11 +41,16 @@ public class ShopFragment extends Fragment {
 
     private User user;
 
+    private UserProgress progress;
+
+    private EquipmentRepository equipmentRepository;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         db = AppDatabase.get(context.getApplicationContext());
+        equipmentRepository = new EquipmentRepository(db);
     }
 
     @Override
@@ -68,7 +77,14 @@ public class ShopFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
-            var equipments = db.equipmentDao().getAll();
+            if (user == null) {
+                Log.e("Shop fragment", "User not authenticated.");
+                return;
+            }
+
+            progress = db.userProgressDao().getById(user.id);
+            var equipments = equipmentRepository.getBuyable();
+            calculateActualPrice(equipments);
 
             requireActivity().runOnUiThread(() -> {
                 ListView lw = binding.equipments;
@@ -81,7 +97,7 @@ public class ShopFragment extends Fragment {
 
     private void onAction(Equipment e, int pos, View row) {
         new Thread(() -> {
-            var userEq = new UserEquipment(user.id, e.id, false);
+            var userEq = new UserEquipment(user.id, e.getId(), ActivityStatus.PURCHASED);
             db.userEquipmentDao().insert(userEq);
 
             requireActivity().runOnUiThread(() -> {
@@ -92,5 +108,20 @@ public class ShopFragment extends Fragment {
                 ).show();
             });
         }).start();
+    }
+
+    private void calculateActualPrice(List<Equipment> equipments) {
+        for (var e : equipments) {
+            if (e.getPrice() == null) {
+                continue;
+            }
+
+            var rewardCoins = db.bossDao().getPreviousLevelRewardCoins(progress.level - 1);
+            if (rewardCoins == null) {
+                rewardCoins = 100;
+            }
+
+            e.calculatedPrice = rewardCoins * e.getPrice() / 100;
+        }
     }
 }

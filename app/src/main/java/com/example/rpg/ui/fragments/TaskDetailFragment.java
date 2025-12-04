@@ -25,6 +25,7 @@ import com.example.rpg.model.User;
 import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
+import com.example.rpg.ui.dialogs.EquipmentActivationDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -201,7 +202,7 @@ public class TaskDetailFragment extends Fragment {
                     textStatus.setText("Status: " + task.status);
                     textDifficulty.setText("Difficulty XP: " + task.difficultyXP);
                     textImportance.setText("Importance XP: " + task.importanceXP);
-                    textExecution.setText("Execution: " + sdf.format(task.executionTime));
+//                    textExecution.setText("Execution: " + sdf.format(task.executionTime));
                     textRepeating.setText(task.isRepeating
                             ? "Repeats every " + task.repeatInterval + " " + task.repeatUnit
                             + " from " + (task.repeatStart != null ? sdf.format(task.repeatStart) : "?")
@@ -295,10 +296,20 @@ public class TaskDetailFragment extends Fragment {
                 return;
             }
 
-            progress.update(task);
+            var isLevelPassed = progress.update(task);
+
             int rowsAffected = db.userProgressDao().update(progress);
             if (rowsAffected < 1) {
                 return;
+            }
+
+            if (isLevelPassed) {
+                Log.d("TaskDetailFragment", "Level passed.");
+
+                requireActivity().runOnUiThread(() -> {
+                    var equipmentActivationDialog = generateConfiguration();
+                    equipmentActivationDialog.show();
+                });
             }
 
             Log.d("[RPG]", "Task passed. Progress updated.");
@@ -315,5 +326,18 @@ public class TaskDetailFragment extends Fragment {
                 });
             }
         });
+    }
+
+    /**
+     * Generates {@link EquipmentActivationDialog} instance with its configuration
+     * @return {@link EquipmentActivationDialog}
+     */
+    private EquipmentActivationDialog generateConfiguration() {
+        var dialog = new EquipmentActivationDialog(requireContext(), user, requireActivity());
+
+        // Cannot cancel pre-fight dialog
+        dialog.setCancelable(false);
+
+        return dialog;
     }
 }

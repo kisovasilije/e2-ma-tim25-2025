@@ -140,27 +140,27 @@ public class TaskFragment extends Fragment {
 
         countdownActive.put(taskId, true);
 
-        Executors.newSingleThreadExecutor().execute(() -> {
-
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) {}
-
-            Boolean stillValid = countdownActive.get(taskId);
-            if (stillValid == null || !stillValid) return;
-
-            Task t = taskDao.getById(taskId);
-            if (t == null) return;
-
-            if ("active".equalsIgnoreCase(t.status)) {
-                t.status = "unfinished";
-                taskDao.update(t);
-            }
-
-            if (isAdded()) {
-                requireActivity().runOnUiThread(this::refreshTasks);
-            }
-        });
+//        Executors.newSingleThreadExecutor().execute(() -> {
+//
+//            try {
+//                Thread.sleep(5000);
+//            } catch (InterruptedException ignored) {}
+//
+//            Boolean stillValid = countdownActive.get(taskId);
+//            if (stillValid == null || !stillValid) return;
+//
+//            Task t = taskDao.getById(taskId);
+//            if (t == null) return;
+//
+//            if ("active".equalsIgnoreCase(t.status)) {
+//                t.status = "unfinished";
+//                taskDao.update(t);
+//            }
+//
+//            if (isAdded()) {
+//                requireActivity().runOnUiThread(this::refreshTasks);
+//            }
+//        });
     }
 
     public void cancelCountdown(long taskId) {
