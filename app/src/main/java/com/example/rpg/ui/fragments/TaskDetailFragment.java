@@ -303,19 +303,14 @@ public class TaskDetailFragment extends Fragment {
                 return;
             }
 
-            requireActivity().runOnUiThread(() -> {
-                var equipmentActivationDialog = generateConfiguration();
-                equipmentActivationDialog.show();
-            });
+            if (isLevelPassed) {
+                Log.d("TaskDetailFragment", "Level passed.");
 
-//            if (isLevelPassed) {
-//                Log.d("TaskDetailFragment", "Level passed.");
-//
-//                requireActivity().runOnUiThread(() -> {
-//                    var equipmentActivationDialog = generateConfiguration();
-//                    equipmentActivationDialog.show();
-//                });
-//            }
+                requireActivity().runOnUiThread(() -> {
+                    var equipmentActivationDialog = generateConfiguration();
+                    equipmentActivationDialog.show();
+                });
+            }
 
             Log.d("[RPG]", "Task passed. Progress updated.");
             if (isAdded() && getActivity() != null) {
