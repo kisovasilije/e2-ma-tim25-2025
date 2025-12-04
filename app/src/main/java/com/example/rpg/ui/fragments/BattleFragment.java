@@ -18,6 +18,7 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.daos.TaskDao;
+import com.example.rpg.database.managers.ProgressManager;
 import com.example.rpg.model.Boss;
 import com.example.rpg.model.UserProgress;
 
@@ -33,7 +34,7 @@ public class BattleFragment extends Fragment {
     private UserProgress progress;
     private LottieAnimationView lottieResult;
     private TextView tvResultText;
-
+    private ProgressManager progressManager;
     private int attacksLeft = 5;
     private double successRate = 0.0;
     private int bossOriginalHP;
@@ -82,7 +83,7 @@ public class BattleFragment extends Fragment {
             }
 
             bossOriginalHP = currentBoss.hp;
-            successRate = progress.getSuccessRate(taskDao, progress.level);
+            successRate = progressManager.getSuccessRate(progress.id, progress.level);
             requireActivity().runOnUiThread(this::updateUI);
         });
     }

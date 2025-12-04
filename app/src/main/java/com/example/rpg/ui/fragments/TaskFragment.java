@@ -3,6 +3,7 @@ package com.example.rpg.ui.fragments;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,10 +30,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 
 public class TaskFragment extends Fragment {
@@ -50,7 +54,6 @@ public class TaskFragment extends Fragment {
     private UserProgress progress;
 
     private final java.util.Map<Long, Boolean> countdownActive = new java.util.HashMap<>();
-    // NEW: track which tasks already have a countdown started (per fragment lifetime)
     private final java.util.Set<Long> countdownInitialized = new java.util.HashSet<>();
 
     @Override
@@ -90,7 +93,6 @@ public class TaskFragment extends Fragment {
             List<Task> allTasks = taskDao.getCurrentAndFutureTasks(new Date());
             List<Category> allCategories = categoryDao.getAll();
 
-            // NEW: for any tasks that are already ACTIVE when loaded from DB, start countdown once
             for (Task t : allTasks) {
                 if ("active".equalsIgnoreCase(t.status) && !countdownInitialized.contains(t.id)) {
                     countdownInitialized.add(t.id);
@@ -134,10 +136,8 @@ public class TaskFragment extends Fragment {
 
     public void startUnfinishedCountdown(long taskId) {
 
-        // Cancel previous countdown
         countdownActive.put(taskId, false);
 
-        // Mark new countdown active
         countdownActive.put(taskId, true);
 
 //        Executors.newSingleThreadExecutor().execute(() -> {
@@ -165,7 +165,7 @@ public class TaskFragment extends Fragment {
 
     public void cancelCountdown(long taskId) {
         countdownActive.put(taskId, false);
-        countdownInitialized.remove(taskId); // so future auto-starts won’t re-trigger for changed tasks
+        countdownInitialized.remove(taskId);
     }
 
     public void showTaskDialog(@Nullable Task task) {
@@ -228,16 +228,21 @@ public class TaskFragment extends Fragment {
                             ? Integer.parseInt(inputInterval.getText().toString()) : 0;
                     String unit = repeating ? spinnerUnit.getSelectedItem().toString() : null;
 
-                    // NEW: execution date removed, it becomes set when task is DONE
-                    Date executionTime = null;
+                    Date date = new Date();
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(date);
 
-                    // NEW: auto repeating date calculation
+                    calendar.add(Calendar.DAY_OF_MONTH, 3);
+
+                    Date executionTime = calendar.getTime();
+
+                    Date completionTime = null;
                     Date repeatStart = null;
                     Date repeatEnd = null;
 
                     if (repeating) {
                         Calendar cal = Calendar.getInstance();
-                        repeatStart = cal.getTime();  // today
+                        repeatStart = cal.getTime();
 
                         if ("Day".equals(unit)) {
                             cal.add(Calendar.DAY_OF_YEAR, interval);
@@ -250,6 +255,7 @@ public class TaskFragment extends Fragment {
 
                     int difficultyXP = getDifficultyXPFromIndex(spinnerDifficulty.getSelectedItemPosition());
                     int importanceXP = getImportanceXPFromIndex(spinnerImportance.getSelectedItemPosition());
+                    int totalXP = 0;
                     Long playerOwnerId = (progress != null) ? progress.id : null;
                     Long stageId = (progress != null) ? (long) progress.level : null;
 
@@ -266,7 +272,9 @@ public class TaskFragment extends Fragment {
                             repeatEnd,
                             difficultyXP,
                             importanceXP,
-                            executionTime // null for now
+                            totalXP,
+                            executionTime,
+                            completionTime
                     );
 
                     newTask.status = (task == null) ? "active" : spinnerStatus.getSelectedItem().toString();

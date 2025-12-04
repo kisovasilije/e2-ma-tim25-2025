@@ -11,9 +11,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <Spinner
-        android:id="@+id/spinner_category_color"
-        android:layout_width="match_parent"
+    <View
+        android:id="@+id/view_color_preview"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="#FF0000"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/btn_pick_color"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        android:text="Pick Color"
+        android:layout_marginTop="8dp" />
+
 </LinearLayout>

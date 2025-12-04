@@ -74,23 +74,6 @@ public class UserProgress {
         return true;
     }
 
-    public double getSuccessRate(TaskDao taskDao, long stageId) {
-        if (taskDao == null) return 0;
-
-        List<Task> tasks = taskDao.getAllTasksForPlayerAndStage(this.id, stageId);
-
-        if (tasks == null || tasks.isEmpty()) return 0;
-
-        int total = tasks.size();
-        int done = 0;
-
-        for (Task t : tasks) {
-            if ("done".equalsIgnoreCase(t.status) || "completed".equalsIgnoreCase(t.status)) done++;
-        }
-
-        return ((double) done / total) * 100.0;
-    }
-
     private boolean isLevelPassed() {
         return xp > getCurrentXpCap();
     }

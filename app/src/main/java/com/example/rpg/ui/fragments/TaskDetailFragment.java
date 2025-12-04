@@ -124,7 +124,6 @@ public class TaskDetailFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         init();
     }
-
     private void init() {
         var username = AuthPrefs.getIsAuthenticated(requireContext());
         Log.i("USERNAME", username != null ? username : "NO USERNAME");
@@ -152,7 +151,6 @@ public class TaskDetailFragment extends Fragment {
             });
         }).start();
     }
-
     private void togglePauseStatus(Button btnPaused) {
         if (task == null) return;
 
@@ -191,7 +189,6 @@ public class TaskDetailFragment extends Fragment {
             });
         });
     }
-
     private void loadTask() {
         Executors.newSingleThreadExecutor().execute(() -> {
             task = taskDao.getById(taskId);
@@ -222,7 +219,6 @@ public class TaskDetailFragment extends Fragment {
             }
         });
     }
-
     private void showEditDialog() {
         if (task == null) return;
 
@@ -287,8 +283,6 @@ public class TaskDetailFragment extends Fragment {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-
-
     private void updateStatus(String newStatus) {
         if (task == null) return;
 

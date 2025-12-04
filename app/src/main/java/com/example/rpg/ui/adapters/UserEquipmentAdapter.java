@@ -61,8 +61,7 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         equipmentDescription.setText(e.equipment.getDescription());
 
         if (e.status != ActivityStatus.PURCHASED) {
-            btn.setEnabled(false);
-            btn.setText("Activated");
+            btn.setVisibility(View.GONE);
         }
         else {
             final View row = v;

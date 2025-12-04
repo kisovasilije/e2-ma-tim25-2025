@@ -1,5 +1,5 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:padding="12dp"
     android:layout_width="match_parent"
@@ -7,22 +7,29 @@
 
     <TextView
         android:id="@+id/text_task_name"
-        android:textSize="16sp"
-        android:textColor="#000"
-        android:layout_width="wrap_content"
+        android:text="Task Name"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
     <TextView
         android:id="@+id/text_task_category"
-        android:textSize="14sp"
-        android:textColor="#555"
-        android:layout_width="wrap_content"
+        android:text="Category"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
     <TextView
         android:id="@+id/text_task_status"
-        android:textSize="14sp"
-        android:textColor="#333"
-        android:layout_width="wrap_content"
+        android:text="Status: active"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <!-- NEW DONE BUTTON -->
+    <Button
+        android:id="@+id/button_done"
+        android:text="Done"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"/>
 </LinearLayout>
