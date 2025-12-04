@@ -22,4 +22,14 @@ public class UserEquipmentRepository {
 //            ue.equipment = equipmentRepository.getById(ue.equipmentId);
 //        }
 //    }
+
+    public List<UserEquipment> getAllWithEquipmentByUserId(long userId) {
+        var ues = db.userEquipmentDao().getByUserId(userId);
+
+        for (var ue : ues) {
+            ue.equipment = equipmentRepository.getById(ue.equipmentId);
+        }
+
+        return ues;
+    }
 }

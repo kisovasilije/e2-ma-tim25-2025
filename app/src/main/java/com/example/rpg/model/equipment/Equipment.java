@@ -5,6 +5,10 @@ import androidx.annotation.Nullable;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.example.rpg.model.ActivityStatus;
+
+import java.util.List;
+
 /**
  * Equipment base class
  */
@@ -35,6 +39,16 @@ public abstract class Equipment {
      */
     @Ignore
     public Integer calculatedPrice;
+
+    public abstract List<String> getAllStatuses();
+
+    public abstract ActivityStatus getNextActivityStatus(ActivityStatus currentStatus);
+
+    /**
+     * Gets equipment description based on its type
+     * @return {@link Equipment} description
+     */
+    public abstract String getDescription();
 
     @NonNull
     public String getId() { return id; }

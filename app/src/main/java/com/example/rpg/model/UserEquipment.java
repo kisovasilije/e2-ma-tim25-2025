@@ -23,9 +23,22 @@ public class UserEquipment {
 
     public ActivityStatus status;
 
+    @Ignore
+    public Equipment equipment;
+
     public UserEquipment(long userId, String equipmentId, ActivityStatus status) {
         this.userId = userId;
         this.equipmentId = equipmentId;
         this.status = status;
+    }
+
+    public void updateStatus() {
+        var nextStatus = equipment.getNextActivityStatus(status);
+        if (nextStatus == null) {
+            Log.w("[UserEquipment]", "Status not updated.");
+            return;
+        }
+
+        status = nextStatus;
     }
 }

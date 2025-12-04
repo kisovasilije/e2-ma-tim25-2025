@@ -7,12 +7,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.repository.UserEquipmentRepository;
 import com.example.rpg.databinding.EquipmentActivationDialogBinding;
 import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.User;
@@ -39,6 +41,8 @@ public class EquipmentActivationDialog extends Dialog {
 
     private final AppDatabase db;
 
+    private final UserEquipmentRepository ueRepository;
+
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     public EquipmentActivationDialog(
@@ -51,6 +55,7 @@ public class EquipmentActivationDialog extends Dialog {
         db = AppDatabase.get(context.getApplicationContext());
         this.user = user;
         this.requireActivity = requireActivity;
+        this.ueRepository = new UserEquipmentRepository(db);
     }
 
     @Override
@@ -68,7 +73,7 @@ public class EquipmentActivationDialog extends Dialog {
         binding.activateEquipment.setChecked(true);
 
         executor.execute(() -> {
-            var ues = db.userEquipmentDao().getByUserId(user.id);
+            var ues = ueRepository.getAllWithEquipmentByUserId(user.id);
             activate = ues.stream()
                     .filter(e -> e.status == ActivityStatus.PURCHASED)
                     .collect(Collectors.toList());
@@ -93,7 +98,27 @@ public class EquipmentActivationDialog extends Dialog {
     }
 
     private void onClick(UserEquipment e, int pos, View row) {
+        e.updateStatus();
+        executor.execute(() -> {
+            var rowsAffected = db.userEquipmentDao().update(e);
+            if (rowsAffected < 1) {
+                Log.w("[Dialog]", "User equipment status not updated properly.");
+                return;
+            }
 
+            Log.d("[Dialog]", "User equipment status updated properly.");
+            activate.remove(e);
+            activated.add(e);
+
+            requireActivity.runOnUiThread(() -> {
+                Toast.makeText(getContext(),
+                        "Equipment activated.",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+                adapter.notifyDataSetChanged();
+            });
+        });
     }
 
     private void onEquipmentCollectionChanged(RadioGroup group, int checkedId) {
