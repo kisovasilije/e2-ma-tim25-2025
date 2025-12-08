@@ -132,6 +132,40 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <TextView
+        android:id="@+id/xp_text"
+        android:layout_width="match_parent"
+        android:gravity="center_vertical"
+        android:layout_height="50dp" />
+
+    <TextView
+        android:id="@+id/coins_text"
+        android:layout_width="match_parent"
+        android:gravity="center_vertical"
+        android:layout_height="50dp" />
+
+    <Button
+        android:id="@+id/show_activated_equipment_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:textColor="@color/black"
+        android:textAlignment="textStart"
+        android:elevation="0dp"
+        android:stateListAnimator="@null"
+        android:text="See activated equipment" />
+
+    <Button
+        android:id="@+id/show_purchased_equipment_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:textColor="@color/black"
+        android:textAlignment="textStart"
+        android:elevation="0dp"
+        android:stateListAnimator="@null"
+        android:text="See purchased equipment" />
+
     <Button
         android:id="@+id/reset_password_button"
         android:layout_width="match_parent"

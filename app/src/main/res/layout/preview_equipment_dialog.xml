@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="400sp"
+    android:layout_height="600dp"
+    android:padding="16dp">
+
+    <ListView
+        android:id="@+id/equipments"
+        android:layout_width="match_parent"
+        android:layout_height="550dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/close_dialog_button"
+        android:text="Close"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" />
+
+</LinearLayout>
