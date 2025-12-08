@@ -17,12 +17,20 @@ import android.view.ViewGroup;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.repository.UserEquipmentRepository;
 import com.example.rpg.databinding.FragmentProfileBinding;
+import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.User;
+import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
+import com.example.rpg.ui.adapters.UserEquipmentAdapter;
+import com.example.rpg.ui.dialogs.PreviewEquipmentDialog;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,11 +45,18 @@ public class ProfileFragment extends Fragment {
 
     private UserProgress progress;
 
+    private List<UserEquipment> activated;
+
+    private List<UserEquipment> purchased;
+
+    private UserEquipmentRepository userEquipmentRepository;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         db = AppDatabase.get(context.getApplicationContext());
+        userEquipmentRepository = new UserEquipmentRepository(db);
     }
 
     @Override
@@ -69,6 +84,14 @@ public class ProfileFragment extends Fragment {
         binding.resetPasswordButton.setOnClickListener(this::toggleResetPassword);
 
         binding.confirmResetPasswordButton.setOnClickListener(this::confirmNewPassword);
+
+        binding.showActivatedEquipmentButton.setOnClickListener((v) -> {
+            new PreviewEquipmentDialog(requireContext(), activated, requireActivity()).show();
+        });
+
+        binding.showPurchasedEquipmentButton.setOnClickListener((v) -> {
+            new PreviewEquipmentDialog(requireContext(), purchased, requireActivity()).show();
+        });
     }
 
     private void setUser() {
@@ -77,8 +100,19 @@ public class ProfileFragment extends Fragment {
 
         new Thread(() -> {
             user = db.userDao().getByUsername(username);
-            if (user != null)
+            if (user != null) {
                 progress = db.userProgressDao().getById(user.id);
+                var ues = userEquipmentRepository.getAllWithEquipmentByUserId(user.id);
+                purchased = ues.stream()
+                        .filter(e -> e.status == ActivityStatus.PURCHASED)
+                        .collect(Collectors.toList());
+
+                activated = ues.stream()
+                        .filter(e ->
+                                e.status != ActivityStatus.PURCHASED &&
+                                        e.status != ActivityStatus.USED)
+                        .collect(Collectors.toList());
+            }
 
             requireActivity().runOnUiThread(() -> {
                 if (user != null) {
@@ -103,11 +137,13 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setProfile() {
-        binding.avatarText.setText(user.avatar.toString());
+        binding.avatarText.setText(user.avatar.toString().toLowerCase());
         binding.usernameText.setText(user.username);
-        binding.levelText.setText("10");
+        binding.levelText.setText(String.format("%d", progress.level));
         binding.titleText.setText(String.format("%s", progress.title));
         binding.ppText.setText(String.format("%d", progress.pp));
+        binding.xpText.setText(String.format("Xp: %d", progress.xp));
+        binding.coinsText.setText(String.format("Coins: %d", progress.coins));
     }
 
     private void toggleResetPassword(View v) {
