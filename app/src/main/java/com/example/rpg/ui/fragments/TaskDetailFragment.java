@@ -19,13 +19,16 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.daos.DailyStatisticsDao;
 import com.example.rpg.database.daos.TaskDao;
+import com.example.rpg.model.statistics.DailyStatistics;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.ui.activities.MainActivity;
 import com.example.rpg.ui.dialogs.EquipmentActivationDialog;
+import com.example.rpg.utils.DateUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -48,6 +51,8 @@ public class TaskDetailFragment extends Fragment {
     private UserProgress progress;
     private AppDatabase db;
 
+    private DailyStatisticsDao dailyStatisticsDao;
+
     public static TaskDetailFragment newInstance(long taskId) {
         TaskDetailFragment fragment = new TaskDetailFragment();
         Bundle args = new Bundle();
@@ -60,6 +65,7 @@ public class TaskDetailFragment extends Fragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         db = AppDatabase.get(context.getApplicationContext());
+        dailyStatisticsDao = db.dailyStatisticsDao();
     }
 
     @Override
@@ -291,19 +297,27 @@ public class TaskDetailFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
             taskDao.update(task);
 
+            if (newStatus.equalsIgnoreCase(Task.CANCELED)) {
+                upsertTaskCanceled();
+                Log.i("[TASK DETAILS]", "updateStatus: task status canceled.");
+                return;
+            }
+
             var progress = db.userProgressDao().getById(user.id);
             if (progress == null) {
                 return;
             }
 
-            var isLevelPassed = progress.update(task);
+            var updateResult = progress.update(task);
 
             int rowsAffected = db.userProgressDao().update(progress);
             if (rowsAffected < 1) {
                 return;
             }
 
-            if (isLevelPassed) {
+            upsertTaskDone(updateResult.xp);
+
+            if (updateResult.isLevelPassed) {
                 Log.d("TaskDetailFragment", "Level passed.");
 
                 requireActivity().runOnUiThread(() -> {
@@ -339,5 +353,57 @@ public class TaskDetailFragment extends Fragment {
         dialog.setCancelable(false);
 
         return dialog;
+    }
+
+    private void upsertTaskDone(int xp) {
+        var day = DateUtil.toDayKey(new Date());
+
+        var stat = dailyStatisticsDao.getForDay(user.id, day);
+        if (stat == null) {
+            stat = new DailyStatistics(user.id, day);
+            stat.tasksDone = 1;
+            stat.xpEarned = xp;
+            var rowsAffected = dailyStatisticsDao.insert(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat created." : "Error occurred creating daily stat."
+            );
+        }
+        else {
+            stat.tasksDone++;
+            stat.xpEarned += xp;
+            var rowsAffected = dailyStatisticsDao.update(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat updated." : "Error occurred updating daily stat."
+            );
+        }
+    }
+
+    private void upsertTaskCanceled() {
+        var day = DateUtil.toDayKey(new Date());
+
+        var stat = dailyStatisticsDao.getForDay(user.id, day);
+        if (stat == null) {
+            stat = new DailyStatistics(user.id, day);
+            stat.tasksCanceled = 1;
+            var rowsAffected = dailyStatisticsDao.insert(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat created." : "Error occurred creating daily stat."
+            );
+        }
+        else {
+            stat.tasksCanceled++;
+            var rowsAffected = dailyStatisticsDao.update(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat updated." : "Error occurred updating daily stat."
+            );
+        }
     }
 }

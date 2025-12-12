@@ -34,4 +34,7 @@ public interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE userId = :userId AND stageId = :stageId")
     List<Task> getAllTasksForPlayerAndStage(long userId, long stageId);
+
+    @Query("select * from tasks where userId = :userId")
+    List<Task> getAllByUserId(long userId);
 }

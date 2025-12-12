@@ -8,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 
@@ -20,23 +19,23 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.daos.CategoryDao;
+import com.example.rpg.database.daos.DailyStatisticsDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.model.Category;
+import com.example.rpg.model.statistics.DailyStatistics;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserProgress;
 import com.example.rpg.prefs.AuthPrefs;
+import com.example.rpg.utils.DateUtil;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Executors;
 
 public class TaskFragment extends Fragment {
@@ -53,6 +52,8 @@ public class TaskFragment extends Fragment {
 
     private UserProgress progress;
 
+    private DailyStatisticsDao dailyStatisticsDao;
+
     private final java.util.Map<Long, Boolean> countdownActive = new java.util.HashMap<>();
     private final java.util.Set<Long> countdownInitialized = new java.util.HashSet<>();
 
@@ -62,6 +63,7 @@ public class TaskFragment extends Fragment {
         db = AppDatabase.get(context.getApplicationContext());
         taskDao = db.taskDao();
         categoryDao = db.categoryDao();
+        dailyStatisticsDao = db.dailyStatisticsDao();
     }
 
     @Override
@@ -155,6 +157,8 @@ public class TaskFragment extends Fragment {
 //            if ("active".equalsIgnoreCase(t.status)) {
 //                t.status = "unfinished";
 //                taskDao.update(t);
+//
+//                upsertTaskUnfinished();
 //            }
 //
 //            if (isAdded()) {
@@ -282,6 +286,8 @@ public class TaskFragment extends Fragment {
                     Executors.newSingleThreadExecutor().execute(() -> {
                         if (task == null) {
                             long newId = taskDao.insert(newTask);
+                            upsertDailyStat();
+
                             countdownInitialized.add(newId);
                             startUnfinishedCountdown(newId);
                         } else {
@@ -316,6 +322,56 @@ public class TaskFragment extends Fragment {
             case 2: return 10;
             case 3: return 100;
             default: return 1;
+        }
+    }
+
+    private void upsertDailyStat() {
+        var day = DateUtil.toDayKey(new Date());
+
+        var stat = dailyStatisticsDao.getForDay(progress.id, day);
+        if (stat == null) {
+            stat = new DailyStatistics(progress.id, day);
+            stat.tasksCreated = 1;
+            var rowsAffected = dailyStatisticsDao.insert(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat created." : "Error occurred creating daily stat."
+            );
+        }
+        else {
+            stat.tasksCreated++;
+            var rowsAffected = dailyStatisticsDao.update(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat updated." : "Error occurred updating daily stat."
+            );
+        }
+    }
+
+    private void upsertTaskUnfinished() {
+        var day = DateUtil.toDayKey(new Date());
+
+        var stat = dailyStatisticsDao.getForDay(progress.id, day);
+        if (stat == null) {
+            stat = new DailyStatistics(progress.id, day);
+            stat.tasksUnfinished = 1;
+            var rowsAffected = dailyStatisticsDao.insert(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat created." : "Error occurred creating daily stat."
+            );
+        }
+        else {
+            stat.tasksUnfinished++;
+            var rowsAffected = dailyStatisticsDao.update(stat);
+
+            Log.i(
+                    "[TASK FRAGMENT]",
+                    rowsAffected > 0 ? "Daily stat updated." : "Error occurred updating daily stat."
+            );
         }
     }
 }

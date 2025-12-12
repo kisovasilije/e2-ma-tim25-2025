@@ -5,9 +5,7 @@ import android.annotation.SuppressLint;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.example.rpg.database.daos.TaskDao;
-
-import java.util.List;
+import com.example.rpg.model.statistics.ProgressUpdateResult;
 
 @Entity(tableName = "user_progresses")
 public class UserProgress {
@@ -61,17 +59,17 @@ public class UserProgress {
      * @return is level passed
      */
     @SuppressLint("DefaultLocale")
-    public boolean update(Task task) {
+    public ProgressUpdateResult update(Task task) {
         xp += task.getTotalXpForLevel(level);
         if (!isLevelPassed()) {
-            return false;
+            return new ProgressUpdateResult(false, xp);
         }
 
         upgradePp();
 
         level++;
         upgradeTitle();
-        return true;
+        return new ProgressUpdateResult(true, xp);
     }
 
     private boolean isLevelPassed() {

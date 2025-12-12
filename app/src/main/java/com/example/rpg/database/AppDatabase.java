@@ -10,6 +10,7 @@ import androidx.room.TypeConverters;
 import com.example.rpg.database.daos.ArmorDao;
 import com.example.rpg.database.daos.BossDao;
 import com.example.rpg.database.daos.CategoryDao;
+import com.example.rpg.database.daos.DailyStatisticsDao;
 import com.example.rpg.database.daos.PotionDao;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.daos.UserDao;
@@ -18,6 +19,7 @@ import com.example.rpg.database.daos.UserProgressDao;
 import com.example.rpg.database.daos.WeaponDao;
 import com.example.rpg.model.Boss;
 import com.example.rpg.model.Category;
+import com.example.rpg.model.statistics.DailyStatistics;
 import com.example.rpg.model.Task;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserEquipment;
@@ -36,9 +38,10 @@ import com.example.rpg.model.equipment.Weapon;
                 Potion.class,
                 Armor.class,
                 Weapon.class,
-                UserEquipment.class
+                UserEquipment.class,
+                DailyStatistics.class
         },
-        version = 14
+        version = 16
 )
 @TypeConverters({Task.DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
@@ -63,6 +66,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract BossDao bossDao();
 
     public abstract UserEquipmentDao userEquipmentDao();
+
+    public abstract DailyStatisticsDao dailyStatisticsDao();
 
     public static AppDatabase get(Context ctx) {
         if (INSTANCE == null) {
