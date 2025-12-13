@@ -1,6 +1,7 @@
 package com.example.rpg.ui.fragments;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -11,6 +12,7 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +30,10 @@ import com.example.rpg.ui.activities.MainActivity;
 import com.example.rpg.ui.adapters.UserEquipmentAdapter;
 import com.example.rpg.ui.dialogs.PreviewEquipmentDialog;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -144,6 +150,7 @@ public class ProfileFragment extends Fragment {
         binding.ppText.setText(String.format("%d", progress.pp));
         binding.xpText.setText(String.format("Xp: %d", progress.xp));
         binding.coinsText.setText(String.format("Coins: %d", progress.coins));
+        setQrCode();
     }
 
     private void toggleResetPassword(View v) {
@@ -190,5 +197,41 @@ public class ProfileFragment extends Fragment {
 
             requireActivity().runOnUiThread(() -> binding.resetPasswordForm.setVisibility(View.GONE));
         }).start();
+    }
+
+    private Bitmap generateQrCode(String content, int w, int h) {
+        QRCodeWriter writer = new QRCodeWriter();
+        try {
+            BitMatrix bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, w, h);
+            Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
+
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    bmp.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
+                }
+            }
+
+            return bmp;
+        } catch (WriterException e) {
+            Log.e("[Profile]", "Error generating QR code.");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void setQrCode() {
+        String qrContent = String.valueOf(user.id);
+
+        int size = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                120,
+                getResources().getDisplayMetrics()
+        );
+
+        Bitmap qrBitmap = generateQrCode(qrContent, size, size);
+
+        if (qrBitmap != null) {
+            binding.qrCode.setImageBitmap(qrBitmap);
+        }
     }
 }
