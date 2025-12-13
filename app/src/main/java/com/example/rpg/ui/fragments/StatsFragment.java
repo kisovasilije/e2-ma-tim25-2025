@@ -18,9 +18,17 @@ import com.example.rpg.model.statistics.StatisticsResult;
 import com.example.rpg.prefs.AuthPrefs;
 import com.example.rpg.services.StatisticsService;
 import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
@@ -92,7 +100,10 @@ public class StatsFragment extends Fragment {
 
     private void populateUi() {
         binding.activeDaysText.setText(generateMsg("Active days", String.valueOf(result.activeDays)));
+        binding.longestStreakText.setText(generateMsg("Longest streak", String.valueOf(result.doneTasksLongestStreak)));
         setTaskStatusChart();
+        setTaskPerCategoryBarChart();
+        setAvgDoneTasksDifficultyChart();
     }
 
     private void setTaskStatusChart() {
@@ -126,5 +137,64 @@ public class StatsFragment extends Fragment {
         binding.taskStatusChart.setDescription(d);
 
         binding.taskStatusChart.invalidate();
+    }
+
+    public void setTaskPerCategoryBarChart() {
+        var categoryCounts = result.doneTasksPerCategory;
+
+        int index = 0;
+        List<BarEntry> entries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (var c : categoryCounts) {
+            entries.add(new BarEntry(index++, c.counter));
+            labels.add(c.categoryName);
+        }
+
+        BarDataSet dataSet = new BarDataSet(entries, "Done per category");
+        BarData data = new BarData(dataSet);
+        data.setBarWidth(0.9f);
+
+        binding.doneTasksPerCategoryChart.setData(data);
+        binding.doneTasksPerCategoryChart.setFitBars(true);
+
+        XAxis xAxis = binding.doneTasksPerCategoryChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        Description d = new Description();
+        d.setText("Completed tasks by category");
+        binding.doneTasksPerCategoryChart.setDescription(d);
+
+        binding.doneTasksPerCategoryChart.invalidate();
+    }
+
+    public void setAvgDoneTasksDifficultyChart() {
+        List<Entry> entries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+        int index = 0;
+        var avg = result.avgDoneTasksDifficulty;
+        for (var e : avg.entrySet()) {
+            entries.add(new Entry(index++, e.getValue()));
+            labels.add(e.getKey());
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, "Avg difficulty XP per day");
+        LineData data  = new LineData(dataSet);
+        binding.avgDifficultyChart.setData(data);
+
+        XAxis xAxis = binding.avgDifficultyChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        Description d = new Description();
+        d.setText("Average difficulty of completed tasks");
+        binding.avgDifficultyChart.setDescription(d);
+
+        binding.avgDifficultyChart.invalidate();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.rpg.services;
 
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.model.statistics.CategoryCount;
 import com.example.rpg.model.statistics.StatisticsResult;
 import com.example.rpg.model.statistics.TaskStatusStats;
 import com.example.rpg.utils.DateUtil;
@@ -8,8 +9,10 @@ import com.example.rpg.utils.DateUtil;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class StatisticsService {
     private final AppDatabase db;
@@ -33,6 +36,15 @@ public class StatisticsService {
 
         // 2. Number of tasks per status
         result.taskStatusStats = calculateTaskStatusStats();
+
+        // 3. Longest streak of done tasks
+        result.doneTasksLongestStreak = calculateLongestDoneTasksStreak();
+
+        // 4. Done tasks count per category
+        result.doneTasksPerCategory = countDoneTasksPerCategory();
+
+        // 5. Average done tasks difficulty
+        result.avgDoneTasksDifficulty = calculateAverageDoneTaskDifficulty();
 
         return result;
     }
@@ -65,5 +77,48 @@ public class StatisticsService {
         }
 
         return stats;
+    }
+
+    private int calculateLongestDoneTasksStreak() {
+        int current = 0, longest = 0;
+
+        var dailyStats = db.dailyStatisticsDao().getAllByUserId(userId);
+        for (var stat : dailyStats) {
+            if (stat.tasksUnfinished > 0) {
+                current = 0;
+                continue;
+            }
+
+            if (stat.tasksDone > 0) {
+                current++;
+                longest = Math.max(longest, current);
+            }
+        }
+
+        return longest;
+    }
+
+    private List<CategoryCount> countDoneTasksPerCategory() {
+        return db.taskDao().getDoneTaskCountByCategory(userId);
+    }
+
+    private Map<String, Float> calculateAverageDoneTaskDifficulty() {
+        Map<String, Integer> sum = new HashMap<>();
+        Map<String, Integer> count = new HashMap<>();
+
+        var tasks = db.taskDao().getAllDoneByUserId(userId);
+        for (var t : tasks) {
+            var day = DateUtil.toDayKey(t.completionTime);
+
+            sum.put(day, sum.getOrDefault(day, 0) + t.difficultyXP);
+            count.put(day, count.getOrDefault(day, 0) + 1);
+        }
+
+        Map<String, Float> avg = new TreeMap<>();
+        for (var day : sum.keySet()) {
+            avg.put(day, sum.get(day) / (float) count.get(day));
+        }
+
+        return avg;
     }
 }

@@ -293,6 +293,9 @@ public class TaskDetailFragment extends Fragment {
         if (task == null) return;
 
         task.status = newStatus;
+        if (newStatus.equalsIgnoreCase(Task.DONE)) {
+            task.completionTime = new Date();
+        }
 
         Executors.newSingleThreadExecutor().execute(() -> {
             taskDao.update(task);
