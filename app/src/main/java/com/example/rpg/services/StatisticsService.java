@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -46,6 +47,10 @@ public class StatisticsService {
         // 5. Average done tasks difficulty
         result.avgDoneTasksDifficulty = calculateAverageDoneTaskDifficulty();
 
+        // 6. Xp earned in past 7 days
+        result.xpPerDay = calculateXpPerDay();
+
+        // Return result
         return result;
     }
 
@@ -120,5 +125,25 @@ public class StatisticsService {
         }
 
         return avg;
+    }
+
+    private Map<String, Integer> calculateXpPerDay() {
+        Map<String, Integer> xpPerDay = new LinkedHashMap<>();
+
+        var stats = db.dailyStatisticsDao().getFromDayByUserId(
+                userId,
+                DateUtil.toDayKey(Date.from(Instant.now().minus(6, ChronoUnit.DAYS)))
+        );
+
+        for (int i = 6; i >= 0; i--) {
+            var day = DateUtil.toDayKey(Date.from(Instant.now().minus(i, ChronoUnit.DAYS)));
+            xpPerDay.put(day, 0);
+        }
+
+        for (var s : stats) {
+            xpPerDay.put(s.day, s.xpEarned);
+        }
+
+        return xpPerDay;
     }
 }

@@ -104,6 +104,7 @@ public class StatsFragment extends Fragment {
         setTaskStatusChart();
         setTaskPerCategoryBarChart();
         setAvgDoneTasksDifficultyChart();
+        setXpPerDayChart();
     }
 
     private void setTaskStatusChart() {
@@ -139,7 +140,7 @@ public class StatsFragment extends Fragment {
         binding.taskStatusChart.invalidate();
     }
 
-    public void setTaskPerCategoryBarChart() {
+    private void setTaskPerCategoryBarChart() {
         var categoryCounts = result.doneTasksPerCategory;
 
         int index = 0;
@@ -170,7 +171,7 @@ public class StatsFragment extends Fragment {
         binding.doneTasksPerCategoryChart.invalidate();
     }
 
-    public void setAvgDoneTasksDifficultyChart() {
+    private void setAvgDoneTasksDifficultyChart() {
         List<Entry> entries = new ArrayList<>();
         List<String> labels = new ArrayList<>();
 
@@ -196,5 +197,33 @@ public class StatsFragment extends Fragment {
         binding.avgDifficultyChart.setDescription(d);
 
         binding.avgDifficultyChart.invalidate();
+    }
+
+    private void setXpPerDayChart() {
+        List<Entry> entries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+        int index = 0;
+        var xp = result.xpPerDay;
+        for (var e : xp.entrySet()) {
+            entries.add(new Entry(index++, e.getValue()));
+            labels.add(e.getKey());
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, "XP earned per day");
+        LineData data  = new LineData(dataSet);
+        binding.xpPerDaysChart.setData(data);
+
+        XAxis xAxis = binding.xpPerDaysChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        Description d = new Description();
+        d.setText("Total amount of XP earned per day in past 7 days");
+        binding.xpPerDaysChart.setDescription(d);
+
+        binding.xpPerDaysChart.invalidate();
     }
 }

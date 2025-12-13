@@ -22,4 +22,7 @@ public interface DailyStatisticsDao {
 
     @Query("select * from daily_statistics where userId = :userId")
     List<DailyStatistics> getAllByUserId(long userId);
+
+    @Query("select * from daily_statistics where userId = :userId and day >= :day")
+    List<DailyStatistics> getFromDayByUserId(long userId, String day);
 }
