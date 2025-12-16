@@ -322,7 +322,7 @@ public class TaskDetailFragment extends Fragment {
 
             upsertTaskDone(updateResult.xp);
 
-            if (true) {
+            if (updateResult.isLevelPassed) {
                 Log.d("TaskDetailFragment", "Level passed.");
 
                 requireActivity().runOnUiThread(() -> {

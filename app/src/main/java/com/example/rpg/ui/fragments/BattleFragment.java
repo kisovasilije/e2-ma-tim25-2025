@@ -29,6 +29,7 @@ import com.example.rpg.model.equipment.EquipmentType;
 import com.example.rpg.prefs.AuthPrefs;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -191,7 +192,7 @@ public class BattleFragment extends Fragment {
         }
 
         // Check if working
-        executor.execute(() -> AppDatabase.get(requireContext()).userProgressDao().update(progress));
+        executor.execute(this::updateAfterBattle);
     }
 
     private void playResultAnimation(boolean victory, String message) {
@@ -262,5 +263,40 @@ public class BattleFragment extends Fragment {
 
     private double applyPercent(double base, double percent) {
         return base + (base * percent / 100.0);
+    }
+
+    private void updateAfterBattle() {
+        var rowsAffected = db.userProgressDao().update(progress);
+        if (rowsAffected < 1) {
+            Log.w(TAG, "updateAfterBattle: User progress not updated after battle finish.");
+            return;
+        }
+
+        var ueStatusUpdated = true;
+        for (var e : activatedEquipment) {
+            e.updateStatus();
+            rowsAffected = db.userEquipmentDao().update(e);
+            if (rowsAffected < 1) {
+                Log.w(TAG, "updateAfterBattle: " + e.equipment.getName() + " status not updated after battle finish.");
+                ueStatusUpdated = false;
+                break;
+            }
+        }
+
+        if (ueStatusUpdated) {
+            printOnUi("Game finished.");
+        } else {
+            printOnUi("Error finishing game.");
+        }
+    }
+
+    private void printOnUi(String msg) {
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(
+                    requireContext(),
+                    msg,
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
     }
 }
