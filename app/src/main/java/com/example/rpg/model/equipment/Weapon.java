@@ -68,4 +68,12 @@ public class Weapon extends Equipment {
     public String getDescription() {
         return DESCRIPTIONS.get(weaponType);
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public String getSubType() {
+       return weaponType.toString().toLowerCase();
+    }
 }

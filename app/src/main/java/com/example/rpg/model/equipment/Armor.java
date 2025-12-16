@@ -71,4 +71,12 @@ public class Armor extends Equipment {
     public String getDescription() {
         return DESCRIPTIONS.get(armorType);
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public String getSubType() {
+       return armorType.toString().toLowerCase();
+    }
 }

@@ -93,4 +93,12 @@ public class Potion extends Equipment {
     public String getDescription() {
         return DESCRIPTIONS.get(pType);
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public String getSubType() {
+       return pType.toString().toLowerCase();
+    }
 }
