@@ -74,8 +74,9 @@ public class Potion extends Equipment {
         }
 
         ActivityStatus next = null;
-        for (int i = 0; i < lifecycles.size(); i++) {
-            if (currentStatus == lifecycles.get(i) && lifecycles.get(i + 1) != null) {
+        var length = lifecycles.size();
+        for (int i = 0; i < length; i++) {
+            if (currentStatus == lifecycles.get(i) && i + 1 < length) {
                 next = lifecycles.get(i + 1);
                 break;
             }
@@ -92,5 +93,13 @@ public class Potion extends Equipment {
     @Override
     public String getDescription() {
         return DESCRIPTIONS.get(pType);
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public String getSubType() {
+       return pType.toString().toLowerCase();
     }
 }

@@ -14,7 +14,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavHost;
 import androidx.navigation.NavOptions;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.rpg.R;
@@ -350,7 +352,11 @@ public class TaskDetailFragment extends Fragment {
      * @return {@link EquipmentActivationDialog}
      */
     private EquipmentActivationDialog generateConfiguration() {
-        var dialog = new EquipmentActivationDialog(requireContext(), user, requireActivity());
+        var dialog = new EquipmentActivationDialog(
+                requireContext(),
+                user,
+                requireActivity()
+        );
 
         // Cannot cancel pre-fight dialog
         dialog.setCancelable(false);

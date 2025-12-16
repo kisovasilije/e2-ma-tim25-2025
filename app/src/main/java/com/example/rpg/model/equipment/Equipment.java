@@ -50,6 +50,8 @@ public abstract class Equipment {
      */
     public abstract String getDescription();
 
+    public abstract String getSubType();
+
     @NonNull
     public String getId() { return id; }
 

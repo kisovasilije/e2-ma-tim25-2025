@@ -3,6 +3,7 @@ package com.example.rpg.database.repository;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.model.UserEquipment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserEquipmentRepository {
@@ -25,6 +26,16 @@ public class UserEquipmentRepository {
 
     public List<UserEquipment> getAllWithEquipmentByUserId(long userId) {
         var ues = db.userEquipmentDao().getByUserId(userId);
+
+        for (var ue : ues) {
+            ue.equipment = equipmentRepository.getById(ue.equipmentId);
+        }
+
+        return ues;
+    }
+
+    public List<UserEquipment> getActivatedWithEquipmentByUserId(long userId) {
+        var ues = db.userEquipmentDao().getActivatedByUserId(userId);
 
         for (var ue : ues) {
             ue.equipment = equipmentRepository.getById(ue.equipmentId);

@@ -1,6 +1,5 @@
 package com.example.rpg.ui.dialogs;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -11,6 +10,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
+import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
+import androidx.navigation.Navigation;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
@@ -27,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class EquipmentActivationDialog extends Dialog {
+    private static final String TAG = EquipmentActivationDialog.class.getSimpleName();
+
     private EquipmentActivationDialogBinding binding;
 
     private UserEquipmentAdapter adapter;
@@ -71,6 +75,22 @@ public class EquipmentActivationDialog extends Dialog {
 
     private void init() {
         binding.activateEquipment.setChecked(true);
+
+        binding.confirmButton.setOnClickListener(v -> {
+            dismiss();
+
+            NavController nav =
+                    Navigation.findNavController(
+                            requireActivity,
+                            R.id.nav_host
+                    );
+
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.base_navigation, true)
+                    .build();
+
+            nav.navigate(R.id.nav_battle, null, opts);
+        });
 
         executor.execute(() -> {
             var ues = ueRepository.getAllWithEquipmentByUserId(user.id);

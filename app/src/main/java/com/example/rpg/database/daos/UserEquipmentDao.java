@@ -19,4 +19,8 @@ public interface UserEquipmentDao {
 
     @Update
     int update(UserEquipment equipment);
+
+    @Query("select * from user_equipments where userId = :userId" +
+            " and status not in ('PURCHASED', 'USED')")
+    List<UserEquipment> getActivatedByUserId(long userId);
 }

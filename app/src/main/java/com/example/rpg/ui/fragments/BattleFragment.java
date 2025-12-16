@@ -2,7 +2,9 @@ package com.example.rpg.ui.fragments;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,13 +21,20 @@ import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
 import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.managers.ProgressManager;
+import com.example.rpg.database.repository.UserEquipmentRepository;
 import com.example.rpg.model.Boss;
+import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
+import com.example.rpg.model.equipment.EquipmentType;
+import com.example.rpg.prefs.AuthPrefs;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class BattleFragment extends Fragment {
+    private static final String TAG = BattleFragment.class.getSimpleName();
 
     private TextView tvBossHP, tvPlayerPP, tvAttackChance, tvAttacksLeft;
     private Button btnAttack;
@@ -39,7 +48,25 @@ public class BattleFragment extends Fragment {
     private double successRate = 0.0;
     private int bossOriginalHP;
 
+    private int damage;
+
+    private int rewardCoins;
+
+    private AppDatabase db;
+
+    private UserEquipmentRepository userEquipmentRepository;
+
+    private List<UserEquipment> activatedEquipment;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+
+        db = AppDatabase.get(context.getApplicationContext());
+        userEquipmentRepository = new UserEquipmentRepository(db);
+    }
 
     @Nullable
     @Override
@@ -65,14 +92,30 @@ public class BattleFragment extends Fragment {
     }
 
     private void loadPlayerAndBoss() {
+        var username = AuthPrefs.getIsAuthenticated(requireContext());
+        if (username == null || username.isBlank()) {
+            Log.w(TAG, "init: user not logged in.");
+            return;
+        }
+
         executor.execute(() -> {
+            var user = db.userDao().getByUsername(username);
+            if (user == null) {
+                Log.e(TAG, "init: user doesn't exist.");
+                return;
+            }
+
             taskDao = AppDatabase.get(requireContext()).taskDao();
 
-            progress = AppDatabase.get(requireContext()).userProgressDao().getById(1);
+            progressManager = new ProgressManager(taskDao);
+
+            progress = AppDatabase.get(requireContext()).userProgressDao().getById(user.id);
 
             currentBoss = AppDatabase.get(requireContext())
                     .bossDao()
                     .getCurrentBoss(progress.level);
+
+            activatedEquipment = userEquipmentRepository.getActivatedWithEquipmentByUserId(user.id);
 
             if (currentBoss == null) {
                 requireActivity().runOnUiThread(() -> {
@@ -84,6 +127,10 @@ public class BattleFragment extends Fragment {
 
             bossOriginalHP = currentBoss.hp;
             successRate = progressManager.getSuccessRate(progress.id, progress.level);
+            damage = progress.pp;
+            rewardCoins = currentBoss.rewardCoins;
+
+            boost();
             requireActivity().runOnUiThread(this::updateUI);
         });
     }
@@ -92,7 +139,7 @@ public class BattleFragment extends Fragment {
         if (progress == null || currentBoss == null) return;
 
         tvBossHP.setText("Boss HP: " + currentBoss.hp);
-        tvPlayerPP.setText("Your PP: " + progress.pp);
+        tvPlayerPP.setText("Your PP: " + damage);
         tvAttackChance.setText("Attack chance: " + String.format("%.0f", successRate) + "%");
         tvAttacksLeft.setText("Attacks left: " + attacksLeft);
         btnAttack.setEnabled(attacksLeft > 0);
@@ -105,7 +152,7 @@ public class BattleFragment extends Fragment {
         boolean hit = Math.random() * 100 < successRate;
 
         if (hit) {
-            currentBoss.hp -= progress.pp;
+            currentBoss.hp -= damage;
             if (currentBoss.hp < 0) currentBoss.hp = 0;
         }
 
@@ -120,7 +167,7 @@ public class BattleFragment extends Fragment {
 
     private void showBattleResult() {
         if (currentBoss.hp == 0) {
-            progress.coins += currentBoss.rewardCoins;
+            progress.coins += rewardCoins;
             progress.level += 1;
             progress.pp = (int) (progress.pp * 1.75);
             playResultAnimation(true,
@@ -145,7 +192,7 @@ public class BattleFragment extends Fragment {
         }
 
         // Check if working
-        executor.execute(() -> AppDatabase.get(requireContext()).userProgressDao().update(progress));
+        executor.execute(this::updateAfterBattle);
     }
 
     private void playResultAnimation(boolean victory, String message) {
@@ -178,5 +225,78 @@ public class BattleFragment extends Fragment {
 //                .beginTransaction()
 //                .replace(R.id.fragment_battle, new TaskFragment())
 //                .commit();
+    }
+
+    private void boost() {
+        double
+                newDamage = damage,
+                newAttacksLeft = attacksLeft,
+                newRewardCoins = rewardCoins;
+
+        for (var e : activatedEquipment) {
+            var bonus = e.equipment.getBonus();
+            var subType = e.equipment.getSubType();
+
+            switch (subType) {
+                case "shield":
+                    successRate = applyPercent(successRate, bonus);
+                    break;
+
+                case "boots":
+                    newAttacksLeft = applyPercent(newAttacksLeft, bonus);
+                    break;
+
+                case "bow_and_arrow":
+                    newRewardCoins = applyPercent(newRewardCoins, bonus);
+                    break;
+
+                default:
+                    newDamage = applyPercent(newDamage, bonus);
+                    break;
+            }
+        }
+
+        attacksLeft = (int) Math.round(newAttacksLeft);
+        rewardCoins = (int) Math.round(newRewardCoins);
+        damage = (int) Math.round(newDamage);
+    }
+
+    private double applyPercent(double base, double percent) {
+        return base + (base * percent / 100.0);
+    }
+
+    private void updateAfterBattle() {
+        var rowsAffected = db.userProgressDao().update(progress);
+        if (rowsAffected < 1) {
+            Log.w(TAG, "updateAfterBattle: User progress not updated after battle finish.");
+            return;
+        }
+
+        var ueStatusUpdated = true;
+        for (var e : activatedEquipment) {
+            e.updateStatus();
+            rowsAffected = db.userEquipmentDao().update(e);
+            if (rowsAffected < 1) {
+                Log.w(TAG, "updateAfterBattle: " + e.equipment.getName() + " status not updated after battle finish.");
+                ueStatusUpdated = false;
+                break;
+            }
+        }
+
+        if (ueStatusUpdated) {
+            printOnUi("Game finished.");
+        } else {
+            printOnUi("Error finishing game.");
+        }
+    }
+
+    private void printOnUi(String msg) {
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(
+                    requireContext(),
+                    msg,
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
     }
 }
