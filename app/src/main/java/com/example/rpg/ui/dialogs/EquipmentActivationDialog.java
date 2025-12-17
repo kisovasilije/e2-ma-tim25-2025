@@ -21,6 +21,8 @@ import com.example.rpg.databinding.EquipmentActivationDialogBinding;
 import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.User;
 import com.example.rpg.model.UserEquipment;
+import com.example.rpg.model.equipment.EquipmentType;
+import com.example.rpg.model.equipment.Weapon;
 import com.example.rpg.ui.adapters.UserEquipmentAdapter;
 
 import java.util.List;
@@ -113,7 +115,7 @@ public class EquipmentActivationDialog extends Dialog {
     }
 
     private void setupAdapter() {
-        adapter = new UserEquipmentAdapter(getContext(), activate, this::onClick);
+        adapter = new UserEquipmentAdapter(getContext(), activate, this::onClick, null);
         binding.equipments.setAdapter(adapter);
     }
 
@@ -144,12 +146,34 @@ public class EquipmentActivationDialog extends Dialog {
     private void onEquipmentCollectionChanged(RadioGroup group, int checkedId) {
         if (checkedId == R.id.activate_equipment) {
             Log.d("Dialog", "activate size = " + activate.size());
-            adapter = new UserEquipmentAdapter(getContext(), activate, this::onClick);
+            adapter = new UserEquipmentAdapter(getContext(), activate, this::onClick, null);
         } else if (checkedId == R.id.activated_equipment) {
             Log.d("Dialog", "activated size = " + activated.size());
-            adapter = new UserEquipmentAdapter(getContext(), activated, this::onClick);
+            adapter = new UserEquipmentAdapter(getContext(), activated, this::onClick, this::onUpgrade);
         }
 
         binding.equipments.setAdapter(adapter);
+    }
+
+    private void onUpgrade(UserEquipment e, int pos, View row) {
+        if (e.equipment.getType() != EquipmentType.WEAPON) {
+            return;
+        }
+
+        e.equipment.addBonus(1);
+        executor.execute(() -> {
+            var rowsAffected = db.weaponDao().update((Weapon) e.equipment);
+            if (rowsAffected < 1) {
+                Log.e(TAG, "onUpgrade: Weapon not upgraded");
+            }
+
+            Log.i(TAG, "onUpgrade: Weapon upgraded.");
+            requireActivity.runOnUiThread(() -> {
+                Toast.makeText(getContext(),
+                        "Weapon upgraded.",
+                        Toast.LENGTH_SHORT
+                ).show();
+            });
+        });
     }
 }

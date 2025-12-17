@@ -49,8 +49,9 @@ public class Weapon extends Equipment {
     @Override
     public ActivityStatus getNextActivityStatus(ActivityStatus currentStatus) {
         ActivityStatus next = null;
-        for (int i = 0; i < STATUS_LIFECYCLES.size(); i++) {
-            if (currentStatus == STATUS_LIFECYCLES.get(i) && STATUS_LIFECYCLES.get(i + 1) != null) {
+        var length = STATUS_LIFECYCLES.size();
+        for (int i = 0; i < length; i++) {
+            if (currentStatus == STATUS_LIFECYCLES.get(i) && i + 1 < length) {
                 next = STATUS_LIFECYCLES.get(i + 1);
                 break;
             }

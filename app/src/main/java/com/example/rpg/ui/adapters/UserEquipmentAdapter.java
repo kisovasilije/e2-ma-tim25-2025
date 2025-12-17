@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.example.rpg.R;
 import com.example.rpg.model.ActivityStatus;
 import com.example.rpg.model.UserEquipment;
+import com.example.rpg.model.equipment.EquipmentType;
 
 import org.w3c.dom.Text;
 
@@ -25,18 +26,26 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         void onClick(UserEquipment e, int pos, View row);
     }
 
+    public interface UeOnUpgrade {
+        void onUpgrade(UserEquipment e, int pos, View row);
+    }
+
     private final UeOnAction onAction;
+
+    private final UeOnUpgrade onUpgrade;
 
     private final List<UserEquipment> data = new ArrayList<>();
 
     public UserEquipmentAdapter(
             @NonNull Context context,
             @NonNull List<UserEquipment> data,
-            @NonNull UeOnAction onAction
+            @NonNull UeOnAction onAction,
+            @Nullable UeOnUpgrade onUpgrade
     ) {
         super(context, 0, data);
 
         this.onAction = onAction;
+        this.onUpgrade = onUpgrade;
         this.data.addAll(data);
     }
 
@@ -55,6 +64,7 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
         TextView equipmentType = v.findViewById(R.id.equipment_type_text);
         TextView equipmentDescription = v.findViewById(R.id.equipment_description_text);
         Button btn = v.findViewById(R.id.activate_equipment_button);
+        Button upgradeWeaponBtn = v.findViewById(R.id.upgrade_weapon_button);
 
         equipmentName.setText(String.format("%s", e.equipment.getName()));
         equipmentType.setText(String.format("%s", e.equipment.getType().toString()));
@@ -62,6 +72,16 @@ public class UserEquipmentAdapter extends ArrayAdapter<UserEquipment> {
 
         if (e.status != ActivityStatus.PURCHASED) {
             btn.setVisibility(View.GONE);
+
+            if (e.equipment.getType() == EquipmentType.WEAPON) {
+                upgradeWeaponBtn.setVisibility(View.VISIBLE);
+                if (onUpgrade != null) {
+                    upgradeWeaponBtn.setEnabled(true);
+                    upgradeWeaponBtn.setClickable(true);
+                    final View row = v;
+                    upgradeWeaponBtn.setOnClickListener(view -> onUpgrade.onUpgrade(e, position, row));
+                }
+            }
         }
         else {
             final View row = v;
