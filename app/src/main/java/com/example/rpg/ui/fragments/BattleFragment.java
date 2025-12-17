@@ -25,11 +25,15 @@ import com.example.rpg.database.repository.UserEquipmentRepository;
 import com.example.rpg.model.Boss;
 import com.example.rpg.model.UserEquipment;
 import com.example.rpg.model.UserProgress;
+import com.example.rpg.model.equipment.Equipment;
 import com.example.rpg.model.equipment.EquipmentType;
 import com.example.rpg.prefs.AuthPrefs;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -57,6 +61,8 @@ public class BattleFragment extends Fragment {
     private UserEquipmentRepository userEquipmentRepository;
 
     private List<UserEquipment> activatedEquipment;
+
+    private List<UserEquipment> activateEquipmentWithDuplicates;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -116,6 +122,8 @@ public class BattleFragment extends Fragment {
                     .getCurrentBoss(progress.level);
 
             activatedEquipment = userEquipmentRepository.getActivatedWithEquipmentByUserId(user.id);
+            activateEquipmentWithDuplicates = new ArrayList<>(activatedEquipment);
+            sumDuplicateArmor();
 
             if (currentBoss == null) {
                 requireActivity().runOnUiThread(() -> {
@@ -273,7 +281,7 @@ public class BattleFragment extends Fragment {
         }
 
         var ueStatusUpdated = true;
-        for (var e : activatedEquipment) {
+        for (var e : activateEquipmentWithDuplicates) {
             e.updateStatus();
             rowsAffected = db.userEquipmentDao().update(e);
             if (rowsAffected < 1) {
@@ -298,5 +306,26 @@ public class BattleFragment extends Fragment {
                     Toast.LENGTH_SHORT
             ).show();
         });
+    }
+
+    private void sumDuplicateArmor() {
+        Map<String, UserEquipment> summedUpEquipment = new HashMap<>();
+
+        for (var e : activatedEquipment) {
+            if (!summedUpEquipment.containsKey(e.equipment.getId())) {
+                summedUpEquipment.put(e.equipment.getId(), e);
+                continue;
+            }
+
+            var existing = summedUpEquipment.get(e.equipment.getId());
+            if (existing == null) {
+                continue;
+            }
+
+            existing.equipment.addBonus(e.equipment.getBonus());
+        }
+
+        activatedEquipment.clear();
+        activatedEquipment.addAll(summedUpEquipment.values());
     }
 }

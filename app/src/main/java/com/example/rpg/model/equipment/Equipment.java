@@ -73,4 +73,6 @@ public abstract class Equipment {
     public Integer getPrice() { return price; }
 
     public void setPrice(@Nullable Integer price) { this.price = price; }
+
+    public void addBonus(int bonus) { this.bonus += bonus; }
 }
