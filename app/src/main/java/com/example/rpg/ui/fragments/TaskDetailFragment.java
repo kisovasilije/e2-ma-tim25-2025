@@ -305,6 +305,13 @@ public class TaskDetailFragment extends Fragment {
             if (newStatus.equalsIgnoreCase(Task.CANCELED)) {
                 upsertTaskCanceled();
                 Log.i("[TASK DETAILS]", "updateStatus: task status canceled.");
+                requireActivity().runOnUiThread(() -> {
+                    if (getParentFragment() instanceof TaskFragment) {
+                        ((TaskFragment) getParentFragment()).cancelCountdown(task.id);
+                        ((TaskFragment) getParentFragment()).refreshTasks();
+                    }
+                    getParentFragmentManager().popBackStack();
+                });
                 return;
             }
 

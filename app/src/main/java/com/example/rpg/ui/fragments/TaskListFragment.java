@@ -2,6 +2,7 @@ package com.example.rpg.ui.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpg.R;
 import com.example.rpg.database.AppDatabase;
+import com.example.rpg.database.daos.TaskDao;
 import com.example.rpg.database.managers.ProgressManager;
 import com.example.rpg.model.Category;
 import com.example.rpg.model.Task;
@@ -33,13 +35,54 @@ public class TaskListFragment extends Fragment {
     private List<Category> allCategories = new ArrayList<>();
     private TaskAdapter adapter;
     private TextView emptyView;
-    public static TaskListFragment newInstance(List<Task> tasks, List<Category> categories, boolean showRepeating) {
+    private AppDatabase db;
+    private TaskDao taskDao;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        db = AppDatabase.get(context.getApplicationContext());
+        taskDao = db.taskDao();
+    }
+
+    public static TaskListFragment newInstance(boolean showRepeating) {
         TaskListFragment fragment = new TaskListFragment();
-        fragment.showRepeating = showRepeating;
-        fragment.allTasks = tasks != null ? tasks : new ArrayList<>();
-        fragment.allCategories = categories != null ? categories : new ArrayList<>();
+        Bundle b = new Bundle();
+        b.putBoolean("showRepeating", showRepeating);
+        fragment.setArguments(b);
         return fragment;
     }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            showRepeating = getArguments().getBoolean("showRepeating", false);
+        }
+    }
+
+    public void reload() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            List<Task> all = taskDao.getCurrentAndFutureTasks(new Date());
+
+            List<Task> filtered = new ArrayList<>();
+            if (all != null) {
+                for (Task t : all) {
+                    if (t.isRepeating == showRepeating) filtered.add(t);
+                }
+            }
+
+            if (!isAdded()) return;
+            requireActivity().runOnUiThread(() -> {
+                if (adapter != null) adapter.setTasks(filtered);
+                if (emptyView != null) {
+                    emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            });
+        });
+    }
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -75,6 +118,7 @@ public class TaskListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         updateTasks(allTasks);
+        reload();
     }
     private static class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
         private List<Task> tasks = new ArrayList<>();
@@ -127,19 +171,18 @@ public class TaskListFragment extends Fragment {
                     task.status = "done";
                     task.completionTime = new Date();
 
-                    ProgressManager pm = new ProgressManager(db.taskDao());
-                    int awardedXp = pm.calculateAwardedXp(task, task.userId);
-
-                    task.totalXP = awardedXp;
-                    db.taskDao().update(task);
-
+                    //ProgressManager pm = new ProgressManager(db.taskDao());
                     UserProgress progress = db.userProgressDao().getById(task.userId);
-                    if (progress != null) {
-                        progress.xp += awardedXp;
-                        if (awardedXp > 0) progress.update(task);
-                        db.userProgressDao().update(progress);
-                    }
+                    if (progress == null) return;
+
+                    var updateResult = progress.update(task);
+
+                    db.userProgressDao().update(progress);
+
+                    task.totalXP = updateResult.xp;
+                    db.taskDao().update(task);
                 });
+
             });
 
             if (clickable) {
