@@ -3,12 +3,22 @@ package com.example.rpg.ui.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
+import android.graphics.drawable.AnimationDrawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,13 +44,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class BattleFragment extends Fragment {
     private static final String TAG = BattleFragment.class.getSimpleName();
 
-    private TextView tvBossHP, tvPlayerPP, tvAttackChance, tvAttacksLeft;
+    private TextView tvBossHpLabel, tvPlayerPpLabel, tvAttackChance, tvAttacksLeft;
+
     private Button btnAttack;
     private TaskDao taskDao;
     private Boss currentBoss;
@@ -51,20 +63,31 @@ public class BattleFragment extends Fragment {
     private int attacksLeft = 5;
     private double successRate = 0.0;
     private int bossOriginalHP;
-
     private int damage;
-
     private int rewardCoins;
-
+    private ImageView ivBoss, ivHit;
+    private AnimationDrawable bossAnim, hitAnim;
+    private ProgressBar pbBossHp, pbPlayerPp;
+    private int barsMax;
+    private boolean bossDefeated = false;
     private AppDatabase db;
-
     private UserEquipmentRepository userEquipmentRepository;
-
     private List<UserEquipment> activatedEquipment;
-
     private List<UserEquipment> activateEquipmentWithDuplicates;
-
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private SensorEventListener shakeListener;
+    private long lastShakeMs = 0;
+    private static final long SHAKE_COOLDOWN_MS = 1900;
+    private static final float SHAKE_THRESHOLD_G = 2.2f;
+    private FrameLayout overlayRng;
+    private TextView tvRng;
+    private ImageView ivHitMiss;
+    private boolean rngRunning = false;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Random rng = new Random();
+
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -80,15 +103,28 @@ public class BattleFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_battle, container, false);
 
-        tvBossHP = view.findViewById(R.id.tv_boss_hp);
-        tvPlayerPP = view.findViewById(R.id.tv_player_pp);
+        tvBossHpLabel = view.findViewById(R.id.tv_boss_hp_label);
+        tvPlayerPpLabel = view.findViewById(R.id.tv_player_pp_label);
         tvAttackChance = view.findViewById(R.id.tv_attack_chance);
         tvAttacksLeft = view.findViewById(R.id.tv_attacks_left);
         btnAttack = view.findViewById(R.id.btn_attack);
-
-        // new views
         lottieResult = view.findViewById(R.id.lottie_result);
         tvResultText = view.findViewById(R.id.tv_result_text);
+        ivBoss = view.findViewById(R.id.iv_boss);
+        ivBoss = view.findViewById(R.id.iv_boss);
+        ivBoss.post(() -> startBossAnim(R.drawable.anim_boss_idle));
+        pbBossHp = view.findViewById(R.id.pb_boss_hp);
+        pbPlayerPp = view.findViewById(R.id.pb_player_pp);
+        overlayRng = view.findViewById(R.id.overlay_rng);
+        tvRng = view.findViewById(R.id.tv_rng);
+        ivHitMiss = view.findViewById(R.id.iv_hitmiss);
+
+
+
+        ivBoss.post(() -> {
+            bossAnim = (AnimationDrawable) ivBoss.getDrawable();
+            if (bossAnim != null) bossAnim.start();
+        });
 
         loadPlayerAndBoss();
 
@@ -96,6 +132,143 @@ public class BattleFragment extends Fragment {
 
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager != null) {
+            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
+
+        shakeListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
+
+                float x = event.values[0];
+                float y = event.values[1];
+                float z = event.values[2];
+
+                float gX = x / SensorManager.GRAVITY_EARTH;
+                float gY = y / SensorManager.GRAVITY_EARTH;
+                float gZ = z / SensorManager.GRAVITY_EARTH;
+
+                float gForce = (float) Math.sqrt(gX*gX + gY*gY + gZ*gZ);
+
+                if (gForce > SHAKE_THRESHOLD_G) {
+                    long now = System.currentTimeMillis();
+                    if (now - lastShakeMs < SHAKE_COOLDOWN_MS) return;
+                    lastShakeMs = now;
+
+                    onShakeAttack();
+                }
+            }
+
+            @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+        };
+
+        if (sensorManager != null && accelerometer != null) {
+            sensorManager.registerListener(shakeListener, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (sensorManager != null && shakeListener != null) {
+            sensorManager.unregisterListener(shakeListener);
+        }
+    }
+
+    private void onShakeAttack() {
+        if (rngRunning) return;
+        if (attacksLeft <= 0 || progress == null || currentBoss == null) return;
+
+        if (currentBoss.hp == 0 || attacksLeft == 0) return;
+
+        startRngRevealAndAttack();
+    }
+
+    private void startRngRevealAndAttack() {
+        rngRunning = true;
+
+        // lock screen / darken
+        overlayRng.setVisibility(View.VISIBLE);
+        ivHitMiss.setVisibility(View.GONE);
+        tvRng.setVisibility(View.VISIBLE);
+
+        // also disable button just in case
+        btnAttack.setEnabled(false);
+
+        int finalRoll = rng.nextInt(101); // 0..100
+
+        // roll fake numbers for ~600ms
+        long rollDuration = 1600;
+        long tick = 50;
+        int ticks = (int) (rollDuration / tick);
+
+        for (int i = 0; i < ticks; i++) {
+            int fake = rng.nextInt(101);
+            ui.postDelayed(() -> tvRng.setText(String.valueOf(fake)), i * tick);
+        }
+
+        // show final number
+        ui.postDelayed(() -> tvRng.setText(String.valueOf(finalRoll)), rollDuration);
+
+        // immediately replace with HIT/MISS png
+        ui.postDelayed(() -> {
+            boolean hit = finalRoll < successRate;
+
+            tvRng.setVisibility(View.GONE);
+            ivHitMiss.setVisibility(View.VISIBLE);
+            ivHitMiss.setImageResource(hit ? R.drawable.hit : R.drawable.miss);
+
+            // now apply the real attack (same as clicking Attack)
+            applyAttackFromShake(hit);
+
+        }, rollDuration + 180);
+
+        // hide overlay shortly after
+        ui.postDelayed(() -> {
+            overlayRng.setVisibility(View.GONE);
+            rngRunning = false;
+
+            // re-enable if fight continues
+            btnAttack.setEnabled(attacksLeft > 0 && currentBoss != null && currentBoss.hp > 0);
+
+        }, rollDuration + 180 + 350);
+    }
+
+    private void applyAttackFromShake(boolean hit) {
+        attacksLeft--;
+
+        if (hit) {
+            currentBoss.hp -= damage;
+            if (currentBoss.hp < 0) currentBoss.hp = 0;
+
+            // optionally play your boss hurt animation here too
+            requireActivity().runOnUiThread(() ->
+                    playBossOnceThen(
+                            R.drawable.anim_hit_once,
+                            (currentBoss.hp == 0) ? R.drawable.anim_boss_defeat : R.drawable.anim_boss_idle,
+                            720
+                    )
+            );
+        } else {
+            // miss: you can show a miss effect, sound, etc.
+        }
+
+        requireActivity().runOnUiThread(() -> {
+            updateUI();
+
+            if (attacksLeft == 0 || currentBoss.hp == 0) {
+                showBattleResult();
+            }
+        });
+    }
+
 
     private void loadPlayerAndBoss() {
         var username = AuthPrefs.getIsAuthenticated(requireContext());
@@ -119,7 +292,7 @@ public class BattleFragment extends Fragment {
 
             currentBoss = AppDatabase.get(requireContext())
                     .bossDao()
-                    .getCurrentBoss(progress.level);
+                    .getCurrentBoss(progress.level - 1);
 
             activatedEquipment = userEquipmentRepository.getActivatedWithEquipmentByUserId(user.id);
             activateEquipmentWithDuplicates = new ArrayList<>(activatedEquipment);
@@ -134,11 +307,12 @@ public class BattleFragment extends Fragment {
             }
 
             bossOriginalHP = currentBoss.hp;
-            successRate = progressManager.getSuccessRate(progress.id, progress.level);
+            successRate = progressManager.getSuccessRate(progress.id, progress.level - 1);
             damage = progress.pp;
             rewardCoins = currentBoss.rewardCoins;
 
             boost();
+            barsMax = Math.max(bossOriginalHP, damage);
             requireActivity().runOnUiThread(this::updateUI);
         });
     }
@@ -146,12 +320,57 @@ public class BattleFragment extends Fragment {
     private void updateUI() {
         if (progress == null || currentBoss == null) return;
 
-        tvBossHP.setText("Boss HP: " + currentBoss.hp);
-        tvPlayerPP.setText("Your PP: " + damage);
-        tvAttackChance.setText("Attack chance: " + String.format("%.0f", successRate) + "%");
+        tvBossHpLabel.setText("Boss HP: " + currentBoss.hp + " / " + bossOriginalHP);
+        tvPlayerPpLabel.setText("Your PP: " + damage);
+        tvAttackChance.setText("Attack chance: " + String.format(Locale.getDefault(), "%.0f", successRate) + "%");
         tvAttacksLeft.setText("Attacks left: " + attacksLeft);
         btnAttack.setEnabled(attacksLeft > 0);
+
+        pbBossHp.setMax(barsMax);
+        pbPlayerPp.setMax(barsMax);
+        pbPlayerPp.setProgress(damage);
+        pbBossHp.setProgress(Math.max(currentBoss.hp, 0));
     }
+
+    private void startBossAnim(int animRes) {
+        if (ivBoss == null) return;
+
+        if (bossAnim != null) bossAnim.stop();
+
+        ivBoss.setImageResource(animRes);
+        ivBoss.post(() -> {
+            bossAnim = (AnimationDrawable) ivBoss.getDrawable();
+            if (bossAnim != null) bossAnim.start();
+        });
+    }
+
+    private void playBossOnceThen(int onceAnimRes, int thenAnimRes, long onceDurationMs) {
+        if (bossDefeated) return; // once defeated, never go back
+
+        startBossAnim(onceAnimRes);
+
+        ivBoss.removeCallbacks(resetBossRunnable);
+        resetBossRunnable = () -> startBossAnim(thenAnimRes);
+        ivBoss.postDelayed(resetBossRunnable, onceDurationMs);
+    }
+
+    private Runnable resetBossRunnable;
+
+    private void playHitOnce() {
+        ivHit.setVisibility(View.VISIBLE);
+
+        hitAnim = (AnimationDrawable) ivHit.getDrawable();
+        if (hitAnim == null) return;
+
+        hitAnim.stop();
+        hitAnim.start();
+
+        ivHit.postDelayed(() -> {
+            hitAnim.stop();
+            ivHit.setVisibility(View.GONE);
+        }, 420);
+    }
+
 
     private void performAttack() {
         if (attacksLeft <= 0 || progress == null || currentBoss == null) return;
@@ -159,7 +378,14 @@ public class BattleFragment extends Fragment {
         attacksLeft--;
         boolean hit = Math.random() * 100 < successRate;
 
-        if (hit) {
+        if (hit && currentBoss.hp > 0) {
+            requireActivity().runOnUiThread(() ->
+                    playBossOnceThen(
+                            R.drawable.anim_hit_once,
+                            R.drawable.anim_boss_idle,
+                            720
+                    )
+            );
             currentBoss.hp -= damage;
             if (currentBoss.hp < 0) currentBoss.hp = 0;
         }
@@ -182,9 +408,15 @@ public class BattleFragment extends Fragment {
                     "Boss defeated! Coins +" + currentBoss.rewardCoins +
                             ", Level up to " + progress.level +
                             ", PP now " + progress.pp);
+            bossDefeated = true;
+            requireActivity().runOnUiThread(() -> {
+                if (resetBossRunnable != null) ivBoss.removeCallbacks(resetBossRunnable);
+                startBossAnim(R.drawable.anim_boss_defeat);
+            });
         } else {
             int damageDealt = bossOriginalHP - currentBoss.hp;
             double damagePercent = (double) damageDealt / bossOriginalHP;
+
 
             if (damagePercent >= 0.5) {
                 int coinsEarned = (int) (currentBoss.rewardCoins * 0.5);
@@ -201,6 +433,7 @@ public class BattleFragment extends Fragment {
 
         // Check if working
         executor.execute(this::updateAfterBattle);
+
     }
 
     private void playResultAnimation(boolean victory, String message) {

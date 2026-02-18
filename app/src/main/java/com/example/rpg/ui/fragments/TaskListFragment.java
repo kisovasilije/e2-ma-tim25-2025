@@ -2,6 +2,7 @@ package com.example.rpg.ui.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -170,19 +171,18 @@ public class TaskListFragment extends Fragment {
                     task.status = "done";
                     task.completionTime = new Date();
 
-                    ProgressManager pm = new ProgressManager(db.taskDao());
-                    int awardedXp = pm.calculateAwardedXp(task, task.userId);
-
-                    task.totalXP = awardedXp;
-                    db.taskDao().update(task);
-
+                    //ProgressManager pm = new ProgressManager(db.taskDao());
                     UserProgress progress = db.userProgressDao().getById(task.userId);
-                    if (progress != null) {
-                        progress.xp += awardedXp;
-                        if (awardedXp > 0) progress.update(task);
-                        db.userProgressDao().update(progress);
-                    }
+                    if (progress == null) return;
+
+                    var updateResult = progress.update(task);
+
+                    db.userProgressDao().update(progress);
+
+                    task.totalXP = updateResult.xp;
+                    db.taskDao().update(task);
                 });
+
             });
 
             if (clickable) {
