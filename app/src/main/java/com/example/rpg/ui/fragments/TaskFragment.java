@@ -14,6 +14,7 @@ import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.rpg.R;
@@ -89,24 +90,14 @@ public class TaskFragment extends Fragment {
         setupTabs();
         return view;
     }
-
     private void setupTabs() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            List<Task> allTasks = taskDao.getCurrentAndFutureTasks(new Date());
-            List<Category> allCategories = categoryDao.getAll();
-
-            for (Task t : allTasks) {
-                if ("active".equalsIgnoreCase(t.status) && !countdownInitialized.contains(t.id)) {
-                    countdownInitialized.add(t.id);
-                    startUnfinishedCountdown(t.id);
-                }
-            }
-
             requireActivity().runOnUiThread(() -> {
-                nonRepeatingFragment = TaskListFragment.newInstance(allTasks, allCategories, false);
-                repeatingFragment = TaskListFragment.newInstance(allTasks, allCategories, true);
+                nonRepeatingFragment = TaskListFragment.newInstance(false);
+                repeatingFragment = TaskListFragment.newInstance(true);
 
-                viewPager.setAdapter(new androidx.viewpager2.adapter.FragmentStateAdapter(this) {
+
+                viewPager.setAdapter(new FragmentStateAdapter(this) {
                     @NonNull
                     @Override
                     public Fragment createFragment(int position) {
@@ -118,6 +109,17 @@ public class TaskFragment extends Fragment {
                         return 2;
                     }
                 });
+
+                viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        Fragment f = getChildFragmentManager().findFragmentByTag("f" + position);
+                        if (f instanceof TaskListFragment) {
+                            ((TaskListFragment) f).reload();
+                        }
+                    }
+                });
+
 
                 new TabLayoutMediator(tabLayout, viewPager,
                         (tab, position) -> tab.setText(position == 0 ? "Non-Repeating" : "Repeating"))
